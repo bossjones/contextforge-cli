@@ -43,6 +43,12 @@ repos:
       - id: check-json
         exclude: (.vscode|.devcontainer|hack|cookbook|ai_docs)
 
+  - repo: https://github.com/bwhmather/ssort
+    rev: master
+    hooks:
+    - id: ssort
+      files: ^.*aio_settings\.py$
+
   # When running with --fix, Ruff's lint hook should be placed before Ruff's formatter hook, and before Black, isort, and other formatting tools, as Ruff's fix behavior can output code changes that require reformatting.
   # SOURCE: https://github.com/astral-sh/ruff-pre-commit
   - repo: https://github.com/astral-sh/ruff-pre-commit

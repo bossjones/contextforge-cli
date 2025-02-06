@@ -9,6 +9,7 @@ from typing import Annotated
 import structlog
 import typer
 from rich import print as rprint
+from typer import Typer
 
 from contextforge_cli.asynctyper import AsyncTyperImproved
 from contextforge_cli.utils.ai_docs_utils.extract_repo import extract_local_directory
@@ -20,7 +21,7 @@ from contextforge_cli.utils.ai_docs_utils.generate_docs import (
 
 logger = structlog.get_logger(__name__)
 
-APP = AsyncTyperImproved(help="ai docs command")
+APP = Typer(help="ai docs command")
 
 
 @APP.command("generate")

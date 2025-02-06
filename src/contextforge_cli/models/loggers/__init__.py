@@ -26,7 +26,7 @@ class LoggerPatch(BaseModel):
     level: str
 
 
-class LoggerModel(BaseModel):
+class LoggerModel(BaseModel):  # noqa: F811
     name: str
     level: int | None
     # children: Optional[List["LoggerModel"]] = None

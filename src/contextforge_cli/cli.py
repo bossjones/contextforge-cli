@@ -34,6 +34,7 @@ import structlog
 import typer
 from langchain.globals import set_debug, set_verbose
 from rich.console import Console
+from typer import Typer
 
 import contextforge_cli
 from contextforge_cli.aio_settings import aiosettings
@@ -117,7 +118,8 @@ async def aload_commands(directory: str = "subcommands") -> None:
                 tg.start_soon(_load_module, module_name, filename[:-7])
 
 
-APP = AsyncTyperImproved()
+# APP = AsyncTyperImproved()
+APP = Typer()
 console = Console()
 cprint = console.print
 load_commands()

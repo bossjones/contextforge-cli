@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 
+from typer import Typer
+
 from contextforge_cli.asynctyper import AsyncTyperImproved
 
-APP = AsyncTyperImproved(help="dummy command")
+APP = Typer(help="dummy command")
 
 
 @APP.command("dummy")
