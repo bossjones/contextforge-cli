@@ -2,10 +2,10 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from contextforge_cli.vendored.cursorfocus.analyzers import (
-    analyze_file_content,
+    analyze_file_content_and_desc,
     is_binary_file,
     should_ignore_file,
 )
@@ -25,25 +25,67 @@ from contextforge_cli.vendored.cursorfocus.project_detector import (
 
 
 class ProjectMetrics:
-    def __init__(self):
-        self.total_files = 0
-        self.total_lines = 0
-        self.files_by_type = {}
-        self.lines_by_type = {}
-        self.files_with_functions = []
+    """Class to track and store project-wide metrics during analysis.
+
+    This class maintains counters and collections for various project metrics
+    such as file counts, line counts, and function information.
+
+    Attributes:
+        total_files (int): Total number of files analyzed
+        total_lines (int): Total number of lines across all files
+        files_by_type (Dict[str, int]): Count of files by extension
+        lines_by_type (Dict[str, int]): Count of lines by file extension
+        files_with_functions (List[Tuple[str, List[Tuple[str, str]], int]]):
+            List of files containing functions, where each entry contains:
+            - File path
+            - List of (function_name, description) tuples
+            - Line count for the file
+    """
+
+    def __init__(self) -> None:
+        """Initialize a new ProjectMetrics instance with zero counts."""
+        self.total_files: int = 0
+        self.total_lines: int = 0
+        self.files_by_type: dict[str, int] = {}
+        self.lines_by_type: dict[str, int] = {}
+        self.files_with_functions: list[tuple[str, list[tuple[str, str]], int]] = []
 
 
 def get_directory_structure(
     project_path: str,
     max_depth: int = 3,
     current_depth: int = 0,
-    metrics: ProjectMetrics = None,
-) -> dict:
-    """Get the directory structure with file information."""
+    metrics: ProjectMetrics | None = None,
+) -> dict[str, Any]:
+    """Get the directory structure with detailed file information.
+
+    Recursively traverses the project directory to build a tree structure of files and directories,
+    collecting metrics and analyzing files for functions along the way.
+
+    Args:
+        project_path: Path to the project root directory
+        max_depth: Maximum depth to traverse in the directory tree (default: 3)
+        current_depth: Current depth in the traversal (used internally)
+        metrics: Optional ProjectMetrics instance to collect project-wide statistics
+
+    Returns:
+        Dict[str, Any]: A nested dictionary representing the directory structure where:
+            - Keys are file/directory names
+            - Values are either:
+                - Another dictionary (for directories)
+                - A dictionary containing file info:
+                    - type: "file"
+                    - line_count: Number of lines in the file
+                    - description: File type description
+                    - functions: List of (function_name, description) tuples
+
+    Note:
+        Skips binary files, ignored files/directories, and respects max_depth limit.
+    """
     if current_depth > max_depth:
         return {}
 
-    structure = {}
+    structure: dict[str, Any] = {}
     try:
         for item in os.listdir(project_path):
             if should_ignore_file(item):
@@ -65,7 +107,7 @@ def get_directory_structure(
                 if ext not in CODE_EXTENSIONS:
                     continue
 
-                functions, line_count = analyze_file_content(item_path)
+                functions, line_count = analyze_file_content_and_desc(item_path)
 
                 if metrics:
                     metrics.total_files += 1
@@ -99,10 +141,30 @@ def get_directory_structure(
 
 
 def structure_to_tree(
-    structure: dict, prefix: str = "", project_path: str = ""
+    structure: dict[str, Any], prefix: str = "", project_path: str = ""
 ) -> list[str]:
-    """Convert directory structure to tree format with file information."""
-    lines = []
+    """Convert directory structure to a formatted tree representation.
+
+    Takes a nested directory structure dictionary and converts it to a list of
+    formatted strings representing a tree view with file information.
+
+    Args:
+        structure: Nested dictionary representing directory structure
+        prefix: String prefix for current line (used for tree indentation)
+        project_path: Current path in the project (used for full path construction)
+
+    Returns:
+        List[str]: List of formatted strings representing the tree structure,
+            where each string includes:
+            - Tree connectors (├─, └─)
+            - Icons (📄 for files, 📁 for directories)
+            - File/directory names
+            - File information (line count, description) for files
+
+    Note:
+        Files are sorted to appear after directories in the tree.
+    """
+    lines: list[str] = []
     items = sorted(
         list(structure.items()),
         key=lambda x: (isinstance(x[1], dict) and x[1].get("type") != "file", x[0]),
@@ -129,8 +191,30 @@ def structure_to_tree(
     return lines
 
 
-def generate_focus_content(project_path: str, config: dict) -> str:
-    """Generate the Focus file content."""
+def generate_focus_content(project_path: str, config: dict[str, Any]) -> str:
+    """Generate a comprehensive Focus file content for the project.
+
+    Creates a detailed markdown document containing project information, structure,
+    and metrics. The document includes project overview, directory structure,
+    key files with their functions, and overall project statistics.
+
+    Args:
+        project_path: Path to the project root directory
+        config: Configuration dictionary containing settings like max_depth
+
+    Returns:
+        str: Generated markdown content including:
+            - Project name and description
+            - Project context and guidelines
+            - Directory structure tree
+            - Key files with their functions
+            - Project metrics and file distribution
+            - Last update timestamp
+
+    Note:
+        The function collects metrics while generating the content and
+        filters out common special methods and built-ins from function lists.
+    """
     metrics = ProjectMetrics()
 
     project_type = detect_project_type(project_path)
@@ -228,7 +312,24 @@ def generate_focus_content(project_path: str, config: dict) -> str:
 
 
 def analyze_file_content(file_path: str) -> tuple[list[tuple[str, str]], int]:
-    """Analyze file content for functions and metrics."""
+    """Analyze file content for functions and their descriptions.
+
+    This function reads a file and attempts to detect function definitions using regex patterns.
+    It skips binary files and files with non-code extensions.
+
+    Args:
+        file_path: Path to the file to analyze.
+
+    Returns:
+        Tuple containing:
+            - List[Tuple[str, str]]: List of tuples where each tuple contains:
+                - Function name (str)
+                - Function description (str)
+            - int: Total number of lines in the file
+
+    Note:
+        Returns empty list and 0 lines if file is binary, non-code, or encounters an error.
+    """
     try:
         # Skip binary and non-code files
         ext = os.path.splitext(file_path)[1].lower()

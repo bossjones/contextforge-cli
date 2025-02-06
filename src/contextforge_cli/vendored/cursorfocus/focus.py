@@ -2,6 +2,7 @@ import logging
 import os
 import time
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 from contextforge_cli.vendored.cursorfocus.auto_updater import AutoUpdater
 from contextforge_cli.vendored.cursorfocus.config import get_default_config, load_config
@@ -13,8 +14,31 @@ from contextforge_cli.vendored.cursorfocus.rules_generator import RulesGenerator
 from contextforge_cli.vendored.cursorfocus.rules_watcher import ProjectWatcherManager
 
 
-def retry_generate_rules(project_path, project_name, max_retries=3):
-    """Retry generating rules file automatically."""
+def retry_generate_rules(
+    project_path: str, project_name: str, max_retries: int = 3
+) -> str | None:
+    """Retry generating rules file automatically with exponential backoff.
+
+    Attempts to generate a rules file for the project, retrying on failure with
+    increasing delays between attempts.
+
+    Args:
+        project_path: Path to the project root directory
+        project_name: Name of the project for display purposes
+        max_retries: Maximum number of retry attempts (default: 3)
+
+    Returns:
+        Optional[str]: Path to the generated rules file if successful,
+            None if all retries failed
+
+    Raises:
+        Exception: If all retry attempts fail
+
+    Note:
+        - Uses exponential backoff between retries (2^n seconds)
+        - Prompts user to choose between JSON and Markdown format
+        - Displays progress and error information during retries
+    """
     retries = 0
     while retries < max_retries:
         try:
@@ -59,8 +83,28 @@ def retry_generate_rules(project_path, project_name, max_retries=3):
                 raise
 
 
-def setup_cursor_focus(project_path, project_name=None):
-    """Set up CursorFocus for a project by generating necessary files."""
+def setup_cursor_focus(project_path: str, project_name: str | None = None) -> None:
+    """Set up CursorFocus for a project by generating or updating necessary files.
+
+    This function handles the initial setup or update of CursorFocus configuration files
+    for a project. It manages both the rules file and Focus.md generation.
+
+    Args:
+        project_path: Path to the project root directory
+        project_name: Optional name of the project for display purposes.
+            If not provided, will use generic "project" in messages.
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If setup fails for any reason (file generation, writing, etc.)
+
+    Note:
+        - Checks for existing .cursorrules file and prompts for update
+        - Generates new rules file with retry mechanism
+        - Creates initial Focus.md using default configuration
+    """
     try:
         # Check for existing rules file
         rules_file = os.path.join(project_path, ".cursorrules")
@@ -87,8 +131,32 @@ def setup_cursor_focus(project_path, project_name=None):
         raise
 
 
-def monitor_project(project_config, global_config):
-    """Monitor a single project."""
+def monitor_project(
+    project_config: dict[str, Any], global_config: dict[str, Any]
+) -> None:
+    """Monitor a single project for changes and update Focus.md accordingly.
+
+    This function continuously monitors a project directory for changes and updates
+    the Focus.md file when changes are detected. It also manages the rules watcher
+    for the project.
+
+    Args:
+        project_config: Project-specific configuration dictionary containing:
+            - project_path: Path to project directory
+            - name: Project name
+            - update_interval: Time between checks (optional)
+            - Other project-specific settings
+        global_config: Global configuration dictionary that applies to all projects
+
+    Returns:
+        None
+
+    Note:
+        - Runs indefinitely until interrupted
+        - Updates Focus.md only when content changes
+        - Uses project-specific update interval from config
+        - Merges project config with global config
+    """
     project_path = project_config["project_path"]
     project_name = project_config["name"]
     print(f"👀 {project_name}")
@@ -125,8 +193,25 @@ def monitor_project(project_config, global_config):
         last_update = current_time
 
 
-def main():
-    """Main function to monitor multiple projects."""
+def main() -> None:
+    """Main entry point for CursorFocus application.
+
+    This function handles the overall application flow including:
+    - Checking for and applying updates
+    - Loading configuration
+    - Setting up projects
+    - Starting monitoring threads for each project
+
+    Returns:
+        None
+
+    Note:
+        - Checks for updates before starting
+        - Uses default config if no config.json found
+        - Monitors multiple projects concurrently using threads
+        - Runs until interrupted with Ctrl+C
+        - All monitoring threads are daemonized
+    """
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
     # Check updates

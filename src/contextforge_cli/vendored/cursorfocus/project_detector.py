@@ -2,15 +2,57 @@ import json
 import os
 import re
 import time
-from typing import Any, Dict, List
+from collections.abc import Callable
+from typing import Any, Dict, List, Optional, Set, TypedDict, Union
 
 from contextforge_cli.vendored.cursorfocus.config import load_config
 
+
+class ProjectInfo(TypedDict):
+    """Type definition for project information dictionary.
+
+    Attributes:
+        type: The detected project type
+        language: Primary programming language
+        framework: Detected framework or 'none'
+        description: Human-readable project description
+        matched_files: List of files that matched project type indicators
+        path: Path to the project directory
+    """
+
+    type: str
+    language: str
+    framework: str
+    description: str
+    matched_files: list[str]
+    path: str
+
+
+class ProjectTypeInfo(TypedDict):
+    """Type definition for project type configuration.
+
+    Attributes:
+        description: Human-readable description of the project type
+        indicators: List of files/patterns that indicate this project type
+        file_patterns: List of file patterns associated with this type
+        required_files: List of files that must be present
+        priority: Priority level for detection (higher = more specific)
+        additional_checks: Optional list of callable checks
+    """
+
+    description: str
+    indicators: list[str]
+    file_patterns: list[str]
+    required_files: list[str]
+    priority: int
+    additional_checks: list[Callable[[str], bool]] | None
+
+
 # Load project types from config at module level
-_config = load_config()
+_config: dict[str, Any] | None = load_config()
 
 # Project type definitions with improved structure
-PROJECT_TYPES = {
+PROJECT_TYPES: dict[str, ProjectTypeInfo] = {
     "python": {
         "description": "Python Project",
         "indicators": [
@@ -285,10 +327,10 @@ PROJECT_TYPES = {
 }
 
 # Add cache for scan results with expiration
-_scan_cache = {}
-CACHE_EXPIRATION = 300  # 5 minutes
+_scan_cache: dict[str, Tuple[float, list[dict[str, Any]]]] = {}
+CACHE_EXPIRATION: int = 300  # 5 minutes
 
-IGNORED_DIRECTORIES = {
+IGNORED_DIRECTORIES: set[str] = {
     ".git",
     ".github",
     "__pycache__",
@@ -304,8 +346,29 @@ IGNORED_DIRECTORIES = {
 }
 
 
-def detect_project_type(project_path):
-    """Detect project type with improved accuracy."""
+def detect_project_type(project_path: str) -> ProjectInfo:
+    """Detect the type of project in the given directory with improved accuracy.
+
+    This function analyzes a directory to determine the type of project it contains,
+    using various indicators like file patterns, required files, and additional checks.
+
+    Args:
+        project_path: Path to the project directory to analyze
+
+    Returns:
+        ProjectInfo: Dictionary containing project information:
+            - type: Detected project type (e.g., 'python', 'javascript')
+            - language: Primary programming language
+            - framework: Detected framework or 'none'
+            - description: Human-readable project description
+            - matched_files: List of files that matched project type indicators
+            - path: Path to the project directory
+
+    Note:
+        - Returns generic project info if path doesn't exist or is inaccessible
+        - Uses a priority system to handle projects with multiple indicators
+        - Performs additional checks specific to each project type
+    """
     if not os.path.exists(project_path):
         return _get_generic_result()
 
@@ -320,13 +383,13 @@ def detect_project_type(project_path):
 
     project_type = "generic"
     max_priority = -1
-    matched_files = []
+    matched_files: list[str] = []
 
     # Check each project type
     for type_name, rules in PROJECT_TYPES.items():
         priority = rules.get("priority", 0)
         matched = False
-        type_matched_files = []
+        type_matched_files: list[str] = []
 
         # Check direct indicators (files/folders that strongly indicate a project type)
         for indicator in rules.get("indicators", []):
@@ -369,7 +432,7 @@ def detect_project_type(project_path):
     if project_type == "generic":
         project_type = _detect_generic_project_type(files_set, all_files)
 
-    result = {
+    result: ProjectInfo = {
         "type": project_type,
         "language": language,
         "framework": framework,
@@ -383,8 +446,12 @@ def detect_project_type(project_path):
     return result
 
 
-def _get_generic_result():
-    """Return a generic project result."""
+def _get_generic_result() -> ProjectInfo:
+    """Return a generic project result when type cannot be determined.
+
+    Returns:
+        ProjectInfo: Default project information for generic/unknown projects
+    """
     return {
         "type": "generic",
         "language": "unknown",
@@ -395,13 +462,29 @@ def _get_generic_result():
     }
 
 
-def _get_files_recursive(path, max_depth=2, current_depth=0):
-    """Get all files recursively up to max_depth."""
+def _get_files_recursive(
+    path: str, max_depth: int = 2, current_depth: int = 0
+) -> set[str]:
+    """Get all files recursively up to max_depth.
+
+    Args:
+        path: Directory path to scan
+        max_depth: Maximum directory depth to traverse (default: 2)
+        current_depth: Current traversal depth (used internally)
+
+    Returns:
+        Set[str]: Set of file paths relative to the root path
+
+    Note:
+        - Skips hidden directories
+        - Handles permission errors gracefully
+        - Returns empty set if path is inaccessible
+    """
     if current_depth > max_depth:
         return set()
 
     try:
-        files = set()
+        files: set[str] = set()
         with os.scandir(path) as entries:
             for entry in entries:
                 if entry.is_file():
@@ -416,24 +499,63 @@ def _get_files_recursive(path, max_depth=2, current_depth=0):
         return set()
 
 
-def _check_indicator(indicator, files_set, all_files):
-    """Check if an indicator matches any files."""
+def _check_indicator(indicator: str, files_set: set[str], all_files: set[str]) -> bool:
+    """Check if an indicator matches any files in the project.
+
+    Args:
+        indicator: File pattern or name to check for
+        files_set: Set of files in the root directory
+        all_files: Set of all files in the project (including subdirectories)
+
+    Returns:
+        bool: True if the indicator matches any files, False otherwise
+
+    Note:
+        Handles both exact matches and glob patterns (using * wildcard)
+    """
     if "*" in indicator:
         pattern = indicator.replace(".", "[.]").replace("*", ".*")
         return any(re.match(pattern + "$", f) for f in all_files)
     return indicator in files_set
 
 
-def _find_matching_files(pattern, files):
-    """Find files matching a pattern."""
+def _find_matching_files(pattern: str, files: set[str]) -> list[str]:
+    """Find files matching a given pattern.
+
+    Args:
+        pattern: File pattern to match against
+        files: Set of files to search through
+
+    Returns:
+        List[str]: List of file names that match the pattern
+
+    Note:
+        Supports both exact matches and glob patterns (using * wildcard)
+    """
     if "*" in pattern:
         pattern = pattern.replace(".", "[.]").replace("*", ".*")
         return [f for f in files if re.match(pattern + "$", f)]
     return [f for f in files if f == pattern]
 
 
-def _detect_generic_project_type(files_set, all_files):
-    """Detect if a generic project has any development patterns."""
+def _detect_generic_project_type(files_set: set[str], all_files: set[str]) -> str:
+    """Detect if a generic project has any common development patterns.
+
+    Args:
+        files_set: Set of files in the root directory
+        all_files: Set of all files in the project (including subdirectories)
+
+    Returns:
+        str: 'generic_dev' if development patterns are found, 'generic' otherwise
+
+    Note:
+        Checks for common development indicators like:
+        - Documentation files
+        - Version control
+        - Test directories
+        - Configuration files
+        - Build artifacts
+    """
     dev_indicators = {
         "docs": ["README.md", "CONTRIBUTING.md", "docs/", "documentation/"],
         "vcs": [".git/", ".svn/", ".hg/"],
@@ -454,8 +576,22 @@ def _detect_generic_project_type(files_set, all_files):
     return "generic_dev" if matched_categories else "generic"
 
 
-def detect_language_and_framework(project_path):
-    """Detect primary language and framework of a project."""
+def detect_language_and_framework(project_path: str) -> tuple[str, str]:
+    """Detect the primary programming language and framework used in a project.
+
+    Args:
+        project_path: Path to the project directory
+
+    Returns:
+        Tuple[str, str]: A tuple containing:
+            - Primary programming language (or 'unknown')
+            - Framework name (or 'none')
+
+    Note:
+        - Language detection based on file extensions and key files
+        - Framework detection based on dependency files and imports
+        - Returns ('unknown', 'none') if detection fails or path is inaccessible
+    """
     try:
         files = os.listdir(project_path)
     except:
@@ -553,8 +689,17 @@ def detect_language_and_framework(project_path):
     return detected_language, detected_framework
 
 
-def get_file_type_info(filename):
-    """Get file type information."""
+def get_file_type_info(filename: str) -> tuple[str, str]:
+    """Get file type information based on file extension.
+
+    Args:
+        filename: Name of the file to analyze
+
+    Returns:
+        Tuple[str, str]: A tuple containing:
+            - File type name (e.g., 'Python Source', 'JavaScript')
+            - Description of the file type and its purpose
+    """
     ext = os.path.splitext(filename)[1].lower()
 
     type_map = {
@@ -576,8 +721,34 @@ def get_file_type_info(filename):
     return type_map.get(ext, ("Generic", "Project file"))
 
 
-def scan_for_projects(root_path, max_depth=3, ignored_dirs=None, use_cache=True):
-    """Scan directory recursively for projects with caching."""
+def scan_for_projects(
+    root_path: str,
+    max_depth: int = 3,
+    ignored_dirs: list[str] | None = None,
+    use_cache: bool = True,
+) -> list[dict[str, str]]:
+    """Scan directory recursively for projects with caching.
+
+    Args:
+        root_path: Root directory to start scanning from
+        max_depth: Maximum directory depth to traverse (default: 3)
+        ignored_dirs: List of directory names to ignore (default: None)
+        use_cache: Whether to use cached results (default: True)
+
+    Returns:
+        List[Dict[str, str]]: List of dictionaries containing project information:
+            - path: Project directory path
+            - type: Detected project type
+            - name: Project name
+            - description: Project description
+            - language: Primary programming language
+            - framework: Detected framework
+
+    Note:
+        - Uses caching to improve performance on subsequent scans
+        - Cache expires after CACHE_EXPIRATION seconds (default: 300)
+        - Ignores directories specified in IGNORED_DIRECTORIES
+    """
     cache_key = f"{root_path}:{max_depth}"
 
     # Check cache
@@ -626,12 +797,34 @@ def get_project_description(project_path):
         }
 
 
-def _do_scan(root_path, max_depth=3, ignored_dirs=None):
-    """Perform a scan of the directory to find projects."""
+def _do_scan(
+    root_path: str, max_depth: int = 3, ignored_dirs: list[str] | None = None
+) -> list[dict[str, str]]:
+    """Perform a scan of the directory to find projects.
+
+    Args:
+        root_path: Root directory to start scanning from
+        max_depth: Maximum directory depth to traverse (default: 3)
+        ignored_dirs: List of directory names to ignore (default: None)
+
+    Returns:
+        List[Dict[str, str]]: List of dictionaries containing project information:
+            - path: Project directory path
+            - type: Detected project type
+            - name: Project name
+            - description: Project description
+            - language: Primary programming language
+            - framework: Detected framework
+
+    Note:
+        - Checks root directory first before scanning subdirectories
+        - Skips ignored directories and inaccessible paths
+        - Uses project type detection with caching
+    """
     if ignored_dirs is None:
         ignored_dirs = _config.get("ignored_directories", [])
 
-    projects = []
+    projects: list[dict[str, str]] = []
     root_path = os.path.abspath(root_path or ".")
 
     # Check the root directory first
@@ -653,7 +846,18 @@ def _do_scan(root_path, max_depth=3, ignored_dirs=None):
             }
         )
 
-    def _scan_directory(current_path, current_depth):
+    def _scan_directory(current_path: str, current_depth: int) -> None:
+        """Recursively scan directory for projects.
+
+        Args:
+            current_path: Current directory being scanned
+            current_depth: Current depth in the directory tree
+
+        Note:
+            - Updates the outer projects list when projects are found
+            - Skips ignored directories and inaccessible paths
+            - Stops at max_depth
+        """
         if current_depth > max_depth:
             return
 

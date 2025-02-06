@@ -44,7 +44,7 @@ def should_ignore_file(name: str) -> bool:
     return name in IGNORED_NAMES or name.startswith(".")
 
 
-def analyze_file_content(file_path: str) -> tuple[list[tuple[str, str]], int]:
+def analyze_file_content_and_desc(file_path: str) -> tuple[list[tuple[str, str]], int]:
     """Analyze file content for functions and their descriptions.
 
     This function reads a file and attempts to detect function definitions using regex patterns.
