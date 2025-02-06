@@ -1217,16 +1217,87 @@ democracy-exe/
   </marimo_standards>
 
   <cli_standards>
-    <standard>Use AsyncTyperImproved for the main APP instance to support both sync and async commands.</standard>
-    <standard>Initialize the main APP with: APP = AsyncTyperImproved()</standard>
-    <standard>Load subcommands dynamically using the load_commands() function.</standard>
-    <standard>Place all subcommands in the subcommands directory with _cmd.py suffix.</standard>
-    <standard>Each subcommand module should define its own APP instance.</standard>
+    <standard>Use Typer for the main APP instance with proper async support through AsyncTyperImproved when needed.</standard>
+    <standard>Initialize the main APP with: APP = Typer() or APP = AsyncTyperImproved() based on async requirements.</standard>
+    <standard>Load subcommands dynamically using the load_commands() function with both sync and async support.</standard>
+    <standard>Place all subcommands in the subcommands directory with _cmd.py suffix (e.g., ai_docs_cmd.py).</standard>
+    <standard>Each subcommand module should define its own APP instance and follow consistent naming.</standard>
     <standard>Use proper type annotations for all command parameters and return values.</standard>
     <standard>Include descriptive docstrings for all commands following Google style.</standard>
     <standard>Use Annotated for command parameters to provide help text and options.</standard>
-    <standard>Prefix async command functions with 'async' or 'aio' for clarity.</standard>
-    <standard>Use proper error handling and logging in command functions.</standard>
+    <standard>Implement proper signal handling for graceful shutdown (SIGTERM).</standard>
+    <standard>Use rich for console output formatting and printing.</standard>
+    <standard>Provide version information through dedicated commands.</standard>
+    <standard>Configure entry points in pyproject.toml:
+      contextforge-cli = "contextforge_cli.cli:main"
+      cfctl = "contextforge_cli.cli:entry"
+      contextforgectl = "contextforge_cli.cli:entry"
+    </standard>
+
+    <example>
+      <![CDATA[
+      # Example subcommand implementation
+      from typing import Annotated
+      import typer
+      from rich import print as rprint
+
+      APP = typer.Typer()
+
+      @APP.command()
+      def my_command(
+          param: Annotated[str, typer.Option("--param", "-p", help="Parameter description")] = "default",
+          verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show detailed output")] = False,
+      ) -> None:
+          """Command description following Google style.
+
+          Args:
+              param: Parameter description
+              verbose: Whether to show detailed output
+          """
+          if verbose:
+              rprint(f"[green]Running command with param: {param}[/green]")
+          # Command implementation
+      ]]>
+    </example>
+
+    <subcommand_organization>
+      <standard>Organize subcommands by functionality (e.g., ai_docs_cmd.py for AI documentation features)</standard>
+      <standard>Keep subcommand modules focused and single-purpose</standard>
+      <standard>Use consistent naming pattern: {feature}_cmd.py</standard>
+      <standard>Include __init__.py in subcommands directory</standard>
+      <structure>
+        <![CDATA[
+        src/contextforge_cli/
+        ├── cli.py                 # Main CLI entry point
+        └── subcommands/
+            ├── __init__.py
+            ├── ai_docs_cmd.py     # AI documentation commands
+            └── {feature}_cmd.py   # Other feature commands
+        ]]>
+      </structure>
+    </subcommand_organization>
+
+    <command_loading>
+      <standard>Use dynamic command loading through load_commands()</standard>
+      <standard>Support both sync and async command loading</standard>
+      <standard>Log command loading process using structlog</standard>
+      <example>
+        <![CDATA[
+        # Dynamic command loading
+        def load_commands(directory: str = "subcommands") -> None:
+            """Load subcommands from the specified directory.
+
+            Args:
+                directory: The directory to load subcommands from
+            """
+            for filename in os.listdir(subcommands_dir):
+                if filename.endswith("_cmd.py"):
+                    module = import_module(module_name)
+                    if hasattr(module, "APP"):
+                        APP.add_typer(module.APP, name=filename[:-7])
+        ]]>
+      </example>
+    </command_loading>
   </cli_standards>
 
   <discord_testing_standards>

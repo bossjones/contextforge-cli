@@ -798,6 +798,7 @@ dependencies = [
     { name = "requests" },
     { name = "requests-toolbelt" },
     { name = "rich" },
+    { name = "scenedetect", extra = ["opencv"] },
     { name = "sentence-transformers" },
     { name = "sentencepiece" },
     { name = "strip-tags" },
@@ -935,6 +936,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3" },
     { name = "requests-toolbelt", specifier = ">=1.0.0" },
     { name = "rich", specifier = ">=13.9.4" },
+    { name = "scenedetect", extras = ["opencv"], specifier = ">=0.6.5.2" },
     { name = "sentence-transformers", specifier = ">=3.4.1" },
     { name = "sentencepiece", specifier = ">=0.2.0" },
     { name = "strip-tags", specifier = ">=0.5.1" },
@@ -4896,6 +4898,26 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b0/71/2f9851164f821064d43b481ddbea0149c2d676c4f4e077b178e7eeaa6660/safetensors-0.5.2-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:5c5b5d9da594f638a259fca766046f44c97244cc7ab8bef161b3e80d04becc76", size = 632533 },
     { url = "https://files.pythonhosted.org/packages/00/f1/5680e2ef61d9c61454fad82c344f0e40b8741a9dbd1e31484f0d31a9b1c3/safetensors-0.5.2-cp38-abi3-win32.whl", hash = "sha256:fe55c039d97090d1f85277d402954dd6ad27f63034fa81985a9cc59655ac3ee2", size = 291167 },
     { url = "https://files.pythonhosted.org/packages/86/ca/aa489392ec6fb59223ffce825461e1f811a3affd417121a2088be7a5758b/safetensors-0.5.2-cp38-abi3-win_amd64.whl", hash = "sha256:78abdddd03a406646107f973c7843276e7b64e5e32623529dc17f3d94a20f589", size = 303756 },
+]
+
+[[package]]
+name = "scenedetect"
+version = "0.6.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "numpy" },
+    { name = "platformdirs" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ef/4e/2f20c616b3dc8420dcc456fd1a0efee35e34f3e499843e22a2661e11f73d/scenedetect-0.6.5.2.tar.gz", hash = "sha256:cf1af517409ac7b98905d8962de4fbefad01684355d12b5ccb992cbc6c4f8a52", size = 150927 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/b5/2c95bb825cf453e1bdfc9acf0ae3c7f249f47290422cc592a170b6e16530/scenedetect-0.6.5.2-py3-none-any.whl", hash = "sha256:148d312d84b26f6e086e5cca278b68ec61985a0957bf165ca1a5c9c55f6f627e", size = 127315 },
+]
+
+[package.optional-dependencies]
+opencv = [
+    { name = "opencv-python" },
 ]
 
 [[package]]

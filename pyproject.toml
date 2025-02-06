@@ -90,6 +90,7 @@ dependencies = [
     "requests>=2.32.3",
     "requests-toolbelt>=1.0.0",
     "rich>=13.9.4",
+    "scenedetect[opencv]>=0.6.5.2",
     "sentence-transformers>=3.4.1",
     "sentencepiece>=0.2.0",
     "strip-tags>=0.5.1",
