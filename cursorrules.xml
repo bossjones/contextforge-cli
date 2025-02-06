@@ -488,6 +488,471 @@
     <standard>Return only modified portions of code in generation results to optimize token usage.</standard>
     <standard>Use aiofiles for all async file operations instead of builtin open, with appropriate file modes specified.</standard>
     <standard>In async functions, NEVER use the built-in `open()` function - always use `aiofiles.open()` to prevent blocking I/O operations.</standard>
+
+    <error_handling>
+      <standard>Define custom exception hierarchies for domain-specific errors.</standard>
+      <standard>Use contextual error messages with structured data.</standard>
+      <standard>Implement proper error recovery strategies.</standard>
+      <standard>Add error boundaries at appropriate system boundaries.</standard>
+      <example name="exception_hierarchy">
+        <![CDATA[
+        from typing import Optional, Dict, Any
+        from dataclasses import dataclass
+
+        class ContextForgeError(Exception):
+            """Base exception class for ContextForge errors."""
+            pass
+
+        class ConfigurationError(ContextForgeError):
+            """Raised when there is a configuration-related error."""
+            pass
+
+        class AIError(ContextForgeError):
+            """Base class for AI-related errors."""
+            pass
+
+        @dataclass
+        class LLMError(AIError):
+            """Error raised during LLM operations.
+
+            Attributes:
+                message: Error message
+                model: Name of the LLM model
+                prompt: Input prompt that caused the error
+                response: Optional response from the model
+                context: Additional error context
+            """
+            message: str
+            model: str
+            prompt: str
+            response: Optional[str] = None
+            context: Optional[Dict[str, Any]] = None
+
+            def __str__(self) -> str:
+                """Get string representation of the error.
+
+                Returns:
+                    str: Formatted error message
+                """
+                parts = [f"LLM Error ({self.model}): {self.message}"]
+                if self.response:
+                    parts.append(f"Response: {self.response}")
+                if self.context:
+                    parts.append(f"Context: {self.context}")
+                return "\n".join(parts)
+
+        def handle_llm_error(error: Exception, context: Dict[str, Any]) -> None:
+            """Handle LLM-related errors with proper logging and recovery.
+
+            Args:
+                error: The caught exception
+                context: Error context
+
+            Raises:
+                LLMError: Wrapped error with context
+            """
+            logger.error(
+                "LLM operation failed",
+                error=str(error),
+                **context
+            )
+            raise LLMError(
+                message=str(error),
+                model=context.get("model", "unknown"),
+                prompt=context.get("prompt", ""),
+                context=context
+            )
+        ]]>
+      </example>
+
+      <example name="error_boundary">
+        <![CDATA[
+        from typing import TypeVar, Callable, Awaitable, ParamSpec
+        from functools import wraps
+        import structlog
+
+        T = TypeVar("T")
+        P = ParamSpec("P")
+
+        def error_boundary(
+            logger: structlog.BoundLogger
+        ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+            """Create an error boundary for async functions.
+
+            Args:
+                logger: Structured logger instance
+
+            Returns:
+                Decorator function for error handling
+            """
+            def decorator(
+                func: Callable[P, Awaitable[T]]
+            ) -> Callable[P, Awaitable[T]]:
+                @wraps(func)
+                async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    try:
+                        return await func(*args, **kwargs)
+                    except ConfigurationError as e:
+                        logger.error(
+                            "Configuration error",
+                            error=str(e),
+                            function=func.__name__
+                        )
+                        raise
+                    except LLMError as e:
+                        logger.error(
+                            "LLM error",
+                            error=str(e),
+                            model=e.model,
+                            function=func.__name__
+                        )
+                        raise
+                    except Exception as e:
+                        logger.exception(
+                            "Unexpected error",
+                            error=str(e),
+                            function=func.__name__
+                        )
+                        raise
+                return wrapper
+            return decorator
+
+        # Usage example
+        logger = structlog.get_logger()
+
+        @error_boundary(logger)
+        async def process_document(content: str) -> Dict[str, Any]:
+            """Process a document with error handling.
+
+            Args:
+                content: Document content to process
+
+            Returns:
+                Dict[str, Any]: Processing results
+
+            Raises:
+                LLMError: If LLM processing fails
+                ConfigurationError: If configuration is invalid
+            """
+            # Implementation
+            pass
+        ]]>
+      </example>
+    </error_handling>
+
+    <logging_patterns>
+      <standard>Use structlog for all logging operations.</standard>
+      <standard>Include contextual data in log events.</standard>
+      <standard>Use proper log levels consistently.</standard>
+      <standard>Add correlation IDs for request tracing.</standard>
+      <example name="structured_logging">
+        <![CDATA[
+        from typing import Any, Dict, Optional
+        import structlog
+        from uuid import uuid4
+
+        def configure_logging() -> None:
+            """Configure structlog for the application.
+
+            This sets up structured logging with proper processors
+            and output formatting.
+            """
+            structlog.configure(
+                processors=[
+                    structlog.contextvars.merge_contextvars,
+                    structlog.processors.add_log_level,
+                    structlog.processors.TimeStamper(fmt="iso"),
+                    structlog.processors.StackInfoRenderer(),
+                    structlog.processors.format_exc_info,
+                    structlog.processors.UnicodeDecoder(),
+                    structlog.processors.JSONRenderer()
+                ],
+                wrapper_class=structlog.make_filtering_bound_logger(
+                    structlog.get_config()["min_level"]
+                ),
+                context_class=dict,
+                logger_factory=structlog.PrintLoggerFactory(),
+                cache_logger_on_first_use=True
+            )
+
+        class RequestContext:
+            """Context manager for request-scoped logging."""
+
+            def __init__(
+                self,
+                correlation_id: Optional[str] = None,
+                **kwargs: Any
+            ) -> None:
+                """Initialize request context.
+
+                Args:
+                    correlation_id: Optional correlation ID
+                    **kwargs: Additional context variables
+                """
+                self.correlation_id = correlation_id or str(uuid4())
+                self.context = {
+                    "correlation_id": self.correlation_id,
+                    **kwargs
+                }
+                self.logger = structlog.get_logger()
+
+            async def __aenter__(self) -> structlog.BoundLogger:
+                """Enter the context and bind variables.
+
+                Returns:
+                    structlog.BoundLogger: Configured logger
+                """
+                self.logger = self.logger.bind(**self.context)
+                self.logger.info("Request started", **self.context)
+                return self.logger
+
+            async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+                """Exit the context and log completion.
+
+                Args:
+                    exc_type: Exception type if raised
+                    exc_val: Exception value if raised
+                    exc_tb: Exception traceback if raised
+                """
+                if exc_val:
+                    self.logger.error(
+                        "Request failed",
+                        error=str(exc_val),
+                        error_type=exc_type.__name__
+                    )
+                else:
+                    self.logger.info("Request completed")
+
+        # Usage example
+        async def process_request(data: Dict[str, Any]) -> None:
+            """Process a request with structured logging.
+
+            Args:
+                data: Request data to process
+            """
+            async with RequestContext(
+                correlation_id=data.get("request_id"),
+                user_id=data.get("user_id"),
+                operation=data.get("operation")
+            ) as logger:
+                logger.info("Processing request", data=data)
+                # Process request
+                logger.info("Request processed successfully")
+        ]]>
+      </example>
+    </logging_patterns>
+
+    <type_safety>
+      <standard>Use proper type annotations for all code.</standard>
+      <standard>Leverage TypeVar and ParamSpec for generic types.</standard>
+      <standard>Use Literal types for constrained values.</standard>
+      <standard>Add runtime type checking where necessary.</standard>
+      <example name="type_patterns">
+        <![CDATA[
+        from typing import (
+            TypeVar, ParamSpec, Callable, Awaitable,
+            Dict, List, Optional, Union, Literal,
+            Protocol, runtime_checkable
+        )
+        from dataclasses import dataclass
+        from enum import Enum
+
+        # Type variables
+        T = TypeVar("T")
+        P = ParamSpec("P")
+
+        # Enums and Literals
+        class LogLevel(str, Enum):
+            """Log level enumeration."""
+            DEBUG = "debug"
+            INFO = "info"
+            WARNING = "warning"
+            ERROR = "error"
+
+        MessageType = Literal["text", "image", "file"]
+
+        # Protocols
+        @runtime_checkable
+        class Processable(Protocol):
+            """Protocol for processable items."""
+
+            async def process(self) -> Dict[str, Any]:
+                """Process the item.
+
+                Returns:
+                    Dict[str, Any]: Processing results
+                """
+                ...
+
+        # Dataclasses with types
+        @dataclass
+        class ProcessingResult:
+            """Result of processing operation.
+
+            Attributes:
+                success: Whether processing succeeded
+                data: Processed data
+                errors: Optional error messages
+            """
+            success: bool
+            data: Dict[str, Any]
+            errors: Optional[List[str]] = None
+
+        # Generic function types
+        AsyncProcessor = Callable[[T], Awaitable[ProcessingResult]]
+
+        # Type-safe function
+        async def process_items(
+            items: List[T],
+            processor: AsyncProcessor[T]
+        ) -> List[ProcessingResult]:
+            """Process multiple items with type safety.
+
+            Args:
+                items: Items to process
+                processor: Processing function
+
+            Returns:
+                List[ProcessingResult]: Processing results
+            """
+            results: List[ProcessingResult] = []
+            for item in items:
+                result = await processor(item)
+                results.append(result)
+            return results
+
+        # Runtime type checking
+        def ensure_type(value: Any, expected_type: type) -> None:
+            """Ensure a value matches an expected type.
+
+            Args:
+                value: Value to check
+                expected_type: Expected type
+
+            Raises:
+                TypeError: If type doesn't match
+            """
+            if not isinstance(value, expected_type):
+                raise TypeError(
+                    f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                )
+        ]]>
+      </example>
+    </type_safety>
+
+    <documentation_standards>
+      <standard>Use Google-style docstrings for all code.</standard>
+      <standard>Include type information in docstrings.</standard>
+      <standard>Document exceptions and error conditions.</standard>
+      <standard>Add usage examples for complex functions.</standard>
+      <example name="docstring_patterns">
+        <![CDATA[
+        from typing import Dict, List, Optional, Union, Any
+        import asyncio
+
+        class DocumentProcessor:
+            """Process documents with various transformations.
+
+            This class provides functionality to process documents through
+            a pipeline of transformations, with proper error handling and
+            logging.
+
+            Attributes:
+                max_retries: Maximum number of retry attempts
+                timeout: Operation timeout in seconds
+
+            Example:
+                ```python
+                processor = DocumentProcessor(max_retries=3)
+                result = await processor.process_document({
+                    "content": "Example content",
+                    "type": "text"
+                })
+                ```
+            """
+
+            def __init__(
+                self,
+                max_retries: int = 3,
+                timeout: float = 30.0
+            ) -> None:
+                """Initialize the document processor.
+
+                Args:
+                    max_retries: Maximum number of retry attempts
+                    timeout: Operation timeout in seconds
+
+                Raises:
+                    ValueError: If max_retries is negative
+                """
+                if max_retries < 0:
+                    raise ValueError("max_retries must be non-negative")
+                self.max_retries = max_retries
+                self.timeout = timeout
+                self.logger = structlog.get_logger()
+
+            async def process_document(
+                self,
+                document: Dict[str, Any],
+                *,
+                priority: Optional[int] = None
+            ) -> Dict[str, Any]:
+                """Process a document through the transformation pipeline.
+
+                This method applies a series of transformations to the document,
+                with proper error handling and retries.
+
+                Args:
+                    document: Document to process
+                    priority: Optional processing priority (higher = more urgent)
+
+                Returns:
+                    Dict[str, Any]: Processed document
+
+                Raises:
+                    ProcessingError: If processing fails after retries
+                    ValueError: If document is invalid
+                    TimeoutError: If processing exceeds timeout
+
+                Example:
+                    ```python
+                    doc = {
+                        "content": "Example content",
+                        "type": "text"
+                    }
+                    result = await processor.process_document(
+                        doc,
+                        priority=1
+                    )
+                    ```
+                """
+                self.logger.info(
+                    "Processing document",
+                    document_type=document.get("type"),
+                    priority=priority
+                )
+
+                try:
+                    async with asyncio.timeout(self.timeout):
+                        result = await self._process_with_retries(
+                            document,
+                            priority=priority
+                        )
+                    return result
+                except asyncio.TimeoutError as e:
+                    self.logger.error(
+                        "Document processing timed out",
+                        timeout=self.timeout
+                    )
+                    raise TimeoutError(
+                        f"Processing timed out after {self.timeout}s"
+                    ) from e
+                except Exception as e:
+                    self.logger.exception("Document processing failed")
+                    raise
+        ]]>
+      </example>
+    </documentation_standards>
   </code_quality>
 
   <import_standards>
