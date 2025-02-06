@@ -1,0 +1,104 @@
+{
+    "scopeName": "text.html.mdx",
+    "name": "MDCanvas",
+    "patterns": [
+        {"include": "#frontmatter"},
+        {"include": "#codeBlocks"},
+        {"include": "#components"},
+        {"include": "#expressions"},
+        {"include": "text.html.basic"}
+    ],
+    "repository": {
+        "frontmatter": {
+            "name": "meta.frontmatter.mdc",
+            "begin": "^---\\s*$",
+            "end": "^---\\s*$",
+            "patterns": [
+                {
+                    "include": "source.yaml"
+                }
+            ]
+        },
+        "codeBlocks": {
+            "name": "meta.codeblock.mdc",
+            "begin": "^```
+            "end": "^```",
+            "beginCaptures": {
+                "0": {"name": "punctuation.definition.code.begin.mdc"},
+                "1": {"name": "entity.name.language.mdc"}
+            },
+            "endCaptures": {
+                "0": {"name": "punctuation.definition.code.end.mdc"}
+            },
+            "patterns": [
+                {
+                    "include": "source.ts"
+                }
+            ]
+        },
+        "components": {
+            "patterns": [
+                {
+                    "begin": "(<)(Canvas)",
+                    "end": "(/>)|(</)(Canvas)(>)",
+                    "beginCaptures": {
+                        "1": {"name": "punctuation.definition.tag.begin.html"},
+                        "2": {"name": "entity.name.tag.custom.mdc"}
+                    },
+                    "endCaptures": {
+                        "1": {"name": "punctuation.definition.tag.end.html"},
+                        "2": {"name": "punctuation.definition.tag.begin.html"},
+                        "3": {"name": "entity.name.tag.custom.mdc"},
+                        "4": {"name": "punctuation.definition.tag.end.html"}
+                    },
+                    "patterns": [
+                        {"include": "#componentAttributes"}
+                    ]
+                },
+                {
+                    "begin": "(<)(PropEditor)",
+                    "end": "(/>)|(</)(PropEditor)(>)",
+                    "beginCaptures": {
+                        "1": {"name": "punctuation.definition.tag.begin.html"},
+                        "2": {"name": "entity.name.tag.custom.mdc"}
+                    },
+                    "endCaptures": {
+                        "1": {"name": "punctuation.definition.tag.end.html"},
+                        "2": {"name": "punctuation.definition.tag.begin.html"},
+                        "3": {"name": "entity.name.tag.custom.mdc"},
+                        "4": {"name": "punctuation.definition.tag.end.html"}
+                    },
+                    "patterns": [
+                        {"include": "#componentAttributes"}
+                    ]
+                }
+            ]
+        },
+        "componentAttributes": {
+            "patterns": [
+                {
+                    "match": "\\b([\\w-]+)=",
+                    "captures": {
+                        "1": {"name": "entity.other.attribute-name.html"}
+                    }
+                },
+                {
+                    "match": "\\{(.*?)\\}",
+                    "captures": {
+                        "1": {"name": "meta.embedded.expression.ts"}
+                    }
+                }
+            ]
+        },
+        "expressions": {
+            "name": "meta.embedded.expression.mdc",
+            "begin": "\\{",
+            "end": "\\}",
+            "patterns": [
+                {
+                    "include": "source.ts"
+                }
+            ]
+        }
+    }
+}

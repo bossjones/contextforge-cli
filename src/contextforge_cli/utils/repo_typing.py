@@ -13,7 +13,7 @@ def run_pyright() -> None:
     Find all missing typestubs, generate them,
     then run pyright
     """
-    modulesMissingStubs: set[str] = set()
+    modules_missing_stubs: set[str] = set()
 
     for line in os.popen(PYRIGHT_CMD).readlines():
         match = re.match(MISSING_TYPESTUB_PATTERN, line)
@@ -21,9 +21,9 @@ def run_pyright() -> None:
         if match:
             group = match[1]
             group = re.sub(r"\..*", "", group)
-            modulesMissingStubs.add(group)
+            modules_missing_stubs.add(group)
 
-    for module in modulesMissingStubs:
+    for module in modules_missing_stubs:
         cmd = f"{PYRIGHT_CMD} --createstub {module}"
         print(cmd)
         # os.system(cmd)

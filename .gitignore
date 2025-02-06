@@ -577,3 +577,12 @@ dpytest_code.txt
 files-to-prompt_code.txt
 mock_repo_code.txt
 test-docs.md
+
+# own scripts
+tree_*.txt
+
+
+.cursor-scratchpad
+.cursor-updates
+TODO.md
+engineering.md
