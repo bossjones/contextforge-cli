@@ -128,3 +128,72 @@ dev = [
     "types-requests>=2.32.0.20241016",
     "validate-pyproject[all,store]>=0.23",
 ]
+
+# --- AI-CONTEXT-START ---
+[tool.codespell]
+skip = '.git,*.pdf,*.svg,*.pdf,*.yaml,*.ipynb,poetry.lock,*.min.js,*.css,package-lock.json,example_data,_dist,examples,templates,*.trig'
+# Ignore latin etc
+ignore-regex = '.*(Stati Uniti|Tense=Pres).*'
+# whats is a typo but used frequently in queries so kept as is
+# aapply - async apply
+# unsecure - typo but part of API, decided to not bother for now
+ignore-words-list = 'momento,collison,ned,foor,reworkd,parth,whats,aapply,mysogyny,unsecure,damon,crate,aadd,symbl,precesses,accademia,nin,cann'
+
+[tool.ruff]
+extend-include = ["*.ipynb"]
+extend-exclude = [
+    "docs/docs/expression_language/why.ipynb", # TODO: look into why linter errors
+]
+
+[tool.ruff.lint]
+select = [
+  "D", # pydocstyle
+  "E",  # pycodestyle
+  "F",  # Pyflakes
+  "UP", # pyupgrade
+  "B",  # flake8-bugbear
+  "I",  # isort
+]
+ignore = [
+  "E501",
+  "B008",
+  "UP006",
+  "UP007",
+  # We actually do want to import from typing_extensions
+  "UP035",
+  # Relax the convention by _not_ requiring documentation for every function parameter.
+  "D417",
+]
+pydocstyle = { convention = "google" }
+
+[tool.ruff.lint.per-file-ignores]
+"**/{cookbook,docs}/*" = [
+    "E402", # allow imports to appear anywhere in docs
+    "F401", # allow "imported but unused" example code
+    "F811", # allow re-importing the same module, so that cells can stay independent
+    "F841", # allow assignments to variables that are never read -- it's example code
+
+]
+"!libs/langchain/langchain/model_laboratory.py"=["D"]
+
+# These files were failing the listed rules at the time ruff was adopted for notebooks.
+# Don't require them to change at once, though we should look into them eventually.
+"cookbook/gymnasium_agent_simulation.ipynb" = ["F821"]
+"docs/docs/integrations/document_loaders/tensorflow_datasets.ipynb" = ["F821"]
+"tests/evaluation/__init__.py" = ["E501"]
+"tests/unit_tests/test_client.py" = ["E501"]
+"tests/*" = ["D", "UP"]
+"bench/*" = ["D", "UP", "T"]
+"docs/*" = ["T", "D"]
+
+
+[tool.pytest.ini_options]
+# --strict-markers will raise errors on unknown marks.
+# https://docs.pytest.org/en/7.1.x/how-to/mark.html#raising-errors-on-unknown-marks
+#
+# https://docs.pytest.org/en/7.1.x/reference/reference.html
+# --strict-config       any warnings encountered while parsing the `pytest`
+#                       section of the configuration file raise errors.
+addopts = "--strict-markers --strict-config --durations=5 -vv"
+asyncio_mode = "auto"
+# --- AI-CONTEXT-END ---
