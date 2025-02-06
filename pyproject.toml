@@ -129,6 +129,7 @@ dev = [
     "pytest-asyncio>=0.25.3",
     "pytest-clarity>=1.0.1",
     "pytest-cov>=6.0.0",
+    "pytest-freezegun",
     "pytest-httpx>=0.35.0",
     "pytest-ignore-flaky>=2.2.1",
     "pytest-memray>=1.7.0",
@@ -316,4 +317,7 @@ markers = [
     "chatbotonly: marks tests that run code that utilizes the chatbot module (deselect with '-m \"not chatbotonly\"')",
     "agenticonly: marks tests that run code that utilizes the agentic module (deselect with '-m \"not agenticonly\"')",
 ]
+
+[tool.uv.sources]
+pytest-freezegun = { git = "https://github.com/bossjones/pytest-freezegun" }
 # --- AI-CONTEXT-END ---

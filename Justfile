@@ -1346,3 +1346,7 @@ install-cursor-update:
 uninstall-cursor-update:
 	launchctl unload ~/Library/LaunchAgents/com.bossjones.cursor-update.plist
 	rm -v ~/Library/LaunchAgents/com.bossjones.cursor-update.plist
+
+# print the directory tree of the project
+tree:
+    tree -L 3 -I "*.pyc|__pycache__|.git|.pytest_cache|.ruff_cache|.mypy_cache|.coverage|htmlcov|.venv|.env|*.egg-info|build|dist|node_modules|.DS_Store"
