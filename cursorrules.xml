@@ -953,6 +953,383 @@
         ]]>
       </example>
     </documentation_standards>
+
+    <structlog_standards>
+      <standard>Use structlog for all logging operations with proper configuration.</standard>
+      <standard>Configure structlog at application startup with appropriate processors.</standard>
+      <standard>Use bound loggers with context for all logging operations.</standard>
+      <standard>Implement proper correlation ID tracking across requests.</standard>
+      <standard>Add appropriate log levels and maintain consistency.</standard>
+      <standard>Include relevant context in all log messages.</standard>
+      <standard>Use proper error logging with exception information.</standard>
+      <standard>Configure JSON output format for production environments.</standard>
+
+      <configuration>
+        <standard>Configure structlog at application startup</standard>
+        <example name="base_configuration">
+          <![CDATA[
+          from typing import Any, Dict, Optional
+          import structlog
+          from structlog.types import Processor
+          import logging
+          import sys
+          from rich.console import Console
+
+          def configure_logging(
+              log_level: str = "INFO",
+              environment: str = "development",
+              json_format: bool = False
+          ) -> None:
+              """Configure structlog for the application.
+
+              This sets up structured logging with appropriate processors
+              and formatters based on the environment.
+
+              Args:
+                  log_level: Minimum log level to record
+                  environment: Current environment (development/production)
+                  json_format: Whether to use JSON output format
+              """
+              console = Console(force_terminal=True)
+
+              # Set up common processors
+              processors: list[Processor] = [
+                  # Add timestamps in ISO format
+                  structlog.processors.TimeStamper(fmt="iso"),
+
+                  # Add log level name
+                  structlog.processors.add_log_level,
+
+                  # Add caller information
+                  structlog.processors.CallsiteParameterAdder(
+                      parameters={
+                          "func_name": "func_name",
+                          "lineno": "lineno",
+                          "module": "module"
+                      }
+                  ),
+
+                  # Add thread information for concurrent operations
+                  structlog.processors.ThreadProcessor(),
+
+                  # Add process information
+                  structlog.processors.ProcessorFormatter.wrap_for_formatter,
+
+                  # Merge context variables
+                  structlog.contextvars.merge_contextvars,
+
+                  # Handle exceptions properly
+                  structlog.processors.format_exc_info,
+
+                  # Handle key names consistently
+                  structlog.processors.KeyValueRenderer()
+              ]
+
+              # Add environment-specific processors
+              if environment == "development":
+                  processors.extend([
+                      structlog.dev.ConsoleRenderer(
+                          colors=True,
+                          exception_formatter=structlog.dev.plain_traceback
+                      )
+                  ])
+              else:
+                  processors.extend([
+                      structlog.processors.dict_tracebacks,
+                      structlog.processors.JSONRenderer()
+                  ])
+
+              # Configure structlog
+              structlog.configure(
+                  processors=processors,
+                  context_class=dict,
+                  logger_factory=structlog.PrintLoggerFactory(),
+                  wrapper_class=structlog.make_filtering_bound_logger(
+                      logging.getLevelName(log_level)
+                  ),
+                  cache_logger_on_first_use=True
+              )
+
+              # Configure standard logging if needed
+              logging.basicConfig(
+                  format="%(message)s",
+                  stream=sys.stdout,
+                  level=log_level
+              )
+          ]]>
+        </example>
+
+        <example name="context_management">
+          <![CDATA[
+          from typing import Any, AsyncGenerator, Optional
+          from contextlib import asynccontextmanager
+          import structlog
+          from uuid import uuid4
+
+          class RequestContext:
+              """Context manager for request-scoped logging."""
+
+              def __init__(
+                  self,
+                  correlation_id: Optional[str] = None,
+                  **kwargs: Any
+              ) -> None:
+                  """Initialize request context.
+
+                  Args:
+                      correlation_id: Optional correlation ID
+                      **kwargs: Additional context variables
+                  """
+                  self.correlation_id = correlation_id or str(uuid4())
+                  self.context = {
+                      "correlation_id": self.correlation_id,
+                      **kwargs
+                  }
+                  self.logger = structlog.get_logger()
+
+              async def __aenter__(self) -> structlog.BoundLogger:
+                  """Enter the context and bind variables.
+
+                  Returns:
+                      structlog.BoundLogger: Configured logger
+                  """
+                  self.logger = self.logger.bind(**self.context)
+                  self.logger.info("Request started")
+                  return self.logger
+
+              async def __aexit__(
+                  self,
+                  exc_type: Optional[type[BaseException]],
+                  exc_val: Optional[BaseException],
+                  exc_tb: Optional[Any]
+              ) -> None:
+                  """Exit the context and log completion.
+
+                  Args:
+                      exc_type: Exception type if raised
+                      exc_val: Exception value if raised
+                      exc_tb: Exception traceback if raised
+                  """
+                  if exc_val:
+                      self.logger.error(
+                          "Request failed",
+                          error=str(exc_val),
+                          error_type=exc_type.__name__ if exc_type else None
+                      )
+                  else:
+                      self.logger.info("Request completed")
+
+          @asynccontextmanager
+          async def log_operation(
+              operation: str,
+              **context: Any
+          ) -> AsyncGenerator[structlog.BoundLogger, None]:
+              """Context manager for logging operations.
+
+              Args:
+                  operation: Operation name
+                  **context: Additional context variables
+
+              Yields:
+                  structlog.BoundLogger: Configured logger
+              """
+              logger = structlog.get_logger().bind(
+                  operation=operation,
+                  **context
+              )
+              try:
+                  logger.info(f"{operation} started")
+                  yield logger
+              except Exception as e:
+                  logger.exception(f"{operation} failed", error=str(e))
+                  raise
+              else:
+                  logger.info(f"{operation} completed")
+          ]]>
+        </example>
+      </configuration>
+
+      <usage_patterns>
+        <standard>Use bound loggers with context</standard>
+        <standard>Include relevant context in all log messages</standard>
+        <standard>Use proper error logging with exception information</standard>
+        <example name="logging_patterns">
+          <![CDATA[
+          import structlog
+          from typing import Any, Dict, Optional
+
+          # Initialize logger
+          logger = structlog.get_logger()
+
+          async def process_document(
+              document_id: str,
+              content: str,
+              **kwargs: Any
+          ) -> Dict[str, Any]:
+              """Process a document with proper logging.
+
+              Args:
+                  document_id: Document identifier
+                  content: Document content
+                  **kwargs: Additional processing parameters
+
+              Returns:
+                  Dict[str, Any]: Processing results
+
+              Raises:
+                  ProcessingError: If processing fails
+              """
+              # Bind context to logger
+              log = logger.bind(
+                  document_id=document_id,
+                  content_length=len(content),
+                  **kwargs
+              )
+
+              try:
+                  log.info("Starting document processing")
+
+                  # Process document
+                  result = await perform_processing(content)
+
+                  log.info(
+                      "Document processing complete",
+                      result_size=len(result)
+                  )
+                  return result
+
+              except Exception as e:
+                  # Log error with full context
+                  log.exception(
+                      "Document processing failed",
+                      error=str(e),
+                      error_type=type(e).__name__
+                  )
+                  raise ProcessingError(
+                      f"Failed to process document {document_id}"
+                  ) from e
+
+          async def handle_request(
+              request_id: str,
+              user_id: str,
+              operation: str,
+              **params: Any
+          ) -> Any:
+              """Handle a request with proper logging context.
+
+              Args:
+                  request_id: Request identifier
+                  user_id: User identifier
+                  operation: Operation name
+                  **params: Operation parameters
+
+              Returns:
+                  Any: Operation result
+              """
+              async with RequestContext(
+                  correlation_id=request_id,
+                  user_id=user_id,
+                  operation=operation,
+                  **params
+              ) as log:
+                  # Log request parameters
+                  log.info(
+                      "Processing request",
+                      params=params
+                  )
+
+                  # Perform operation
+                  result = await perform_operation(
+                      operation,
+                      **params
+                  )
+
+                  # Log success with relevant metrics
+                  log.info(
+                      "Request processed",
+                      result_type=type(result).__name__,
+                      metrics={
+                          "processing_time": 1.23,
+                          "result_size": len(str(result))
+                      }
+                  )
+
+                  return result
+          ]]>
+        </example>
+      </usage_patterns>
+
+      <best_practices>
+        <standard>Always use bound loggers with context</standard>
+        <standard>Include correlation IDs for request tracking</standard>
+        <standard>Use proper log levels consistently</standard>
+        <standard>Add context managers for operation logging</standard>
+        <standard>Configure appropriate processors for each environment</standard>
+        <standard>Use JSON format in production</standard>
+        <standard>Include relevant metrics and measurements</standard>
+        <standard>Handle sensitive data appropriately</standard>
+        <standard>Use proper error logging with full context</standard>
+        <standard>Implement request-scoped logging</standard>
+        <standard>Add caller information when helpful</standard>
+        <standard>Use proper exception formatting</standard>
+      </best_practices>
+
+      <testing>
+        <standard>Use structlog's testing.capture_logs for testing</standard>
+        <standard>Never use pytest's caplog for structlog testing</standard>
+        <standard>Test log messages using event checking</standard>
+        <example name="log_testing">
+          <![CDATA[
+          import pytest
+          import structlog
+          from typing import Generator, Any
+
+          @pytest.fixture
+          def capture_logs() -> Generator[Any, None, None]:
+              """Fixture for capturing structlog output.
+
+              Yields:
+                  List of captured log entries
+              """
+              with structlog.testing.capture_logs() as captured:
+                  yield captured
+
+          async def test_document_processing(
+              capture_logs: Any,
+              sample_document: Dict[str, Any]
+          ) -> None:
+              """Test document processing with log verification.
+
+              Args:
+                  capture_logs: Log capture fixture
+                  sample_document: Test document fixture
+              """
+              # Process document
+              await process_document(
+                  document_id=sample_document["id"],
+                  content=sample_document["content"]
+              )
+
+              # Verify log messages
+              assert any(
+                  log.get("event") == "Starting document processing"
+                  for log in capture_logs
+              ), "Missing start log message"
+
+              assert any(
+                  log.get("event") == "Document processing complete"
+                  for log in capture_logs
+              ), "Missing completion log message"
+
+              # Verify context
+              assert any(
+                  log.get("document_id") == sample_document["id"]
+                  for log in capture_logs
+              ), "Missing document ID in log context"
+          ]]>
+        </example>
+      </testing>
+    </structlog_standards>
   </code_quality>
 
   <import_standards>
