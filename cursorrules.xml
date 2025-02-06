@@ -89,18 +89,126 @@
 
   <import_standards>
     <standard>Always use Ruff's isort (I) rules for import sorting.</standard>
-    <standard>Group imports into three sections separated by a blank line: standard library, third-party, and local imports.</standard>
+    <standard>Place `from __future__ import annotations` at the top of every Python file.</standard>
+    <standard>Group imports into sections separated by a blank line:
+      1. Future imports
+      2. Standard library imports
+      3. Third-party imports
+      4. Local imports from contextforge_cli
+      5. Type checking imports (if needed)
+    </standard>
     <standard>Sort imports alphabetically within each section.</standard>
-    <standard>Place `from __future__ import annotations` at the top of the file before other imports.</standard>
     <standard>Use absolute imports instead of relative imports.</standard>
-    <standard>For TYPE_CHECKING imports in tests, group pytest-specific imports together:
-      - CaptureFixture
-      - FixtureRequest
-      - LogCaptureFixture
-      - MonkeyPatch
-      - MockerFixture
-      - VCRRequest (when using pytest-recording)</standard>
-    <standard>Configure Ruff to automatically fix import sorting with `ruff --select I --fix`.</standard>
+    <standard>Add appropriate linter directives at the top of files based on imports:
+      - For Discord.py files:
+        ```python
+        # pylint: disable=no-member
+        # pyright: reportAttributeAccessIssue=false
+        ```
+      - For Pydantic files:
+        ```python
+        # pylint: disable=no-name-in-module
+        # pylint: disable=no-member
+        # pyright: reportInvalidTypeForm=false
+        # pyright: reportUndefinedVariable=false
+        ```
+      - For files using both:
+        ```python
+        # pylint: disable=no-name-in-module
+        # pylint: disable=no-member
+        # pyright: reportInvalidTypeForm=false
+        # pyright: reportUndefinedVariable=false
+        # pyright: reportAttributeAccessIssue=false
+        ```
+    </standard>
+
+    <test_imports>
+      <standard>For test files, always import TYPE_CHECKING block with pytest types:
+        ```python
+        if TYPE_CHECKING:
+            from _pytest.capture import CaptureFixture
+            from _pytest.fixtures import FixtureRequest
+            from _pytest.logging import LogCaptureFixture
+            from _pytest.monkeypatch import MonkeyPatch
+            from pytest_mock.plugin import MockerFixture
+        ```
+      </standard>
+      <standard>Group pytest-specific imports together.</standard>
+      <standard>Import test utilities from conftest.py when shared across tests.</standard>
+    </test_imports>
+
+    <import_organization>
+      <standard>Use consistent import aliases across the codebase.</standard>
+      <standard>Import only what is needed, avoid wildcard imports (*).</standard>
+      <standard>Use multi-line imports for better readability when importing multiple items.</standard>
+      <standard>Keep import blocks organized and clean with proper spacing.</standard>
+      <example>
+        <![CDATA[
+        # Good import organization
+        from __future__ import annotations
+
+        import asyncio
+        import os
+        import sys
+        from pathlib import Path
+        from typing import TYPE_CHECKING, Any, Optional
+
+        import structlog
+        import typer
+        from rich import print as rprint
+        from rich.console import Console
+
+        from contextforge_cli.bot_logger import configure_logging
+        from contextforge_cli.shell import ProcessException, ShellConsole
+
+        if TYPE_CHECKING:
+            from _pytest.capture import CaptureFixture
+            from _pytest.monkeypatch import MonkeyPatch
+        ]]>
+      </example>
+    </import_organization>
+
+    <import_patterns>
+      <standard>Use consistent patterns for commonly used imports:
+        - Type imports: `from typing import TYPE_CHECKING, Any, Optional`
+        - Path handling: `from pathlib import Path`
+        - Async operations: `import asyncio`
+        - Logging: `import structlog`
+        - CLI: `import typer`
+        - Console output: `from rich import print as rprint`
+      </standard>
+      <standard>Use type annotation imports consistently:
+        - Collections: `from collections.abc import AsyncGenerator, Generator`
+        - Typing: `from typing import TypeVar, Union`
+      </standard>
+    </import_patterns>
+
+    <best_practices>
+      <standard>Always add type checking imports in a TYPE_CHECKING block.</standard>
+      <standard>Use consistent import aliases across the codebase (e.g., `rprint` for `rich.print`).</standard>
+      <standard>Keep imports organized and clean with proper spacing.</standard>
+      <standard>Import only what is needed to minimize namespace pollution.</standard>
+      <standard>Use multi-line imports for better readability when importing multiple items.</standard>
+      <standard>Add appropriate linter directives based on imported packages.</standard>
+    </best_practices>
+
+    <configuration>
+      <standard>Configure isort in pyproject.toml:
+        ```toml
+        [tool.isort]
+        profile = "black"
+        known_first_party = ["contextforge_cli"]
+        sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+        default_section = "THIRDPARTY"
+        multi_line_output = 3
+        include_trailing_comma = true
+        force_grid_wrap = 0
+        use_parentheses = true
+        ensure_newline_before_comments = true
+        line_length = 88
+        ```
+      </standard>
+    </configuration>
   </import_standards>
 
   <testing>
@@ -191,13 +299,115 @@
   </testing>
 
   <dependency_management>
-    <standard>Use uv (https://docs.astral.sh/uv) for dependency management.</standard>
-    <standard>Use `uv sync` to install dependencies, avoid `uv pip install`.</standard>
-    <standard>Use Ruff for code style consistency.</standard>
-    <standard>Document Ruff rules in pyproject.toml with stability indicators.</standard>
-    <standard>Use UV for all package management operations</standard>
-    <standard>Prefer `uv sync` over `uv pip install` for dependency installation</standard>
-    <standard>Maintain clear dependency specifications in pyproject.toml</standard>
+    <standard>Use UV (https://docs.astral.sh/uv) as the primary dependency management tool.</standard>
+    <standard>Use `uv sync` for dependency installation, avoid `uv pip install`.</standard>
+    <standard>Maintain lock file consistency with `uv lock --check`.</standard>
+    <standard>Use `uv.lock` for deterministic dependency resolution.</standard>
+    <standard>Document all dependencies in pyproject.toml with specific version constraints.</standard>
+
+    <version_management>
+      <standard>Use >= version constraints for dependencies to allow compatible updates.</standard>
+      <standard>Pin exact versions in uv.lock for reproducible builds.</standard>
+      <standard>Use `uv lock --upgrade` for controlled dependency updates.</standard>
+      <standard>Run `uv lock --check` before commits to ensure lock file consistency.</standard>
+    </version_management>
+
+    <dependency_groups>
+      <standard>Organize dependencies into logical groups in pyproject.toml:</standard>
+      <groups>
+        <group>
+          <name>project.dependencies</name>
+          <description>Core runtime dependencies required for the application</description>
+        </group>
+        <group>
+          <name>dependency-groups.dev</name>
+          <description>Development dependencies (testing, linting, type checking)</description>
+        </group>
+      </groups>
+    </dependency_groups>
+
+    <workflows>
+      <standard>Follow these workflows for dependency management:</standard>
+      <workflow>
+        <name>Installation</name>
+        <steps>
+          <step>Run `uv sync` to install dependencies from lock file</step>
+          <step>Use `uv sync --all-extras --dev` for development environment</step>
+        </steps>
+      </workflow>
+      <workflow>
+        <name>Updating Dependencies</name>
+        <steps>
+          <step>Run `uv lock --upgrade --dry-run` to preview updates</step>
+          <step>Run `uv lock --upgrade` to update dependencies</step>
+          <step>Run `uv sync --all-extras --dev` to apply updates</step>
+        </steps>
+      </workflow>
+      <workflow>
+        <name>Version Management</name>
+        <steps>
+          <step>Use `uv version` to check current version</step>
+          <step>Use `uv version --bump [major|minor|patch]` for version updates</step>
+        </steps>
+      </workflow>
+    </workflows>
+
+    <tool_integration>
+      <standard>Configure UV with other development tools:</standard>
+      <integrations>
+        <integration>
+          <tool>pre-commit</tool>
+          <config>Use `uv run pre-commit install` for hook installation</config>
+        </integration>
+        <integration>
+          <tool>pytest</tool>
+          <config>Use `uv run pytest` for test execution</config>
+        </integration>
+        <integration>
+          <tool>mypy</tool>
+          <config>Use `uv run mypy` for type checking</config>
+        </integration>
+      </integrations>
+    </tool_integration>
+
+    <best_practices>
+      <standard>Always run `uv lock --check` before committing changes to ensure lock file consistency</standard>
+      <standard>Use `uv sync --all-extras --dev` for complete development environment setup</standard>
+      <standard>Document dependency changes in commit messages</standard>
+      <standard>Keep dependencies organized by purpose in pyproject.toml</standard>
+      <standard>Use dependency groups to manage optional features</standard>
+      <standard>Regularly update dependencies with `uv lock --upgrade`</standard>
+      <standard>Run test suite after dependency updates</standard>
+    </best_practices>
+
+    <example>
+      <![CDATA[
+      # Example pyproject.toml dependency specification
+      [project]
+      dependencies = [
+          "langchain>=0.3.17",
+          "langchain-core>=0.3.33",
+          "langgraph>=0.2.69",
+          "structlog>=24.4.0",
+          "typing-extensions>=4.12.2"
+      ]
+
+      [dependency-groups]
+      dev = [
+          "pytest>=8.3.4",
+          "pytest-asyncio>=0.25.3",
+          "pytest-cov>=6.0.0",
+          "ruff>=0.9.4",
+          "mypy>=1.8.0"
+      ]
+
+      # Example UV commands
+      $ uv sync --all-extras --dev  # Install all dependencies
+      $ uv lock --check            # Verify lock file consistency
+      $ uv lock --upgrade         # Update dependencies
+      $ uv version --bump minor   # Bump version number
+      ]]>
+    </example>
   </dependency_management>
 
   <langchain_standards>
@@ -380,25 +590,153 @@
 
   <configuration_standards>
     <ruff_rules>
-      <standard>Document all Ruff rules in pyproject.toml with inline comments.</standard>
-      <standard>Include stability indicators for each rule:
-        - ✔️ (stable)
-        - 🧪 (unstable/preview)
-        - ⚠️ (deprecated)
-        - ❌ (removed)
-        - 🛠️ (auto-fixable)
+      <standard>Document all Ruff rules in pyproject.toml with inline comments and stability indicators.</standard>
+      <standard>Use the following stability indicators for each rule:
+        - ✔️ (stable) - Well-tested rules safe for production
+        - 🧪 (unstable/preview) - New rules that may change
+        - ⚠️ (deprecated) - Rules that will be removed
+        - ❌ (removed) - Rules no longer available
+        - 🛠️ (auto-fixable) - Rules that can be auto-fixed
       </standard>
-      <standard>Keep rule descriptions under 160 characters when possible.</standard>
+      <standard>Keep rule descriptions under 160 characters for readability.</standard>
       <standard>Reference Ruff version from .pre-commit-config.yaml.</standard>
-      <example>
+      <standard>Group rules by category with clear section comments.</standard>
+      <standard>Include rationale for non-default rule selections.</standard>
+
+      <rule_categories>
+        <category>
+          <name>Error Prevention</name>
+          <rules>
+            <rule>E401 ✔️ 🛠️ - Multiple imports on one line</rule>
+            <rule>E402 ✔️ - Module level import not at top of file</rule>
+            <rule>E501 ✔️ 🛠️ - Line too long (82 characters)</rule>
+            <rule>E711 ✔️ 🛠️ - Comparison to None should be 'if cond is None:'</rule>
+            <rule>E712 ✔️ 🛠️ - Comparison to True/False should be 'if cond is True:'</rule>
+            <rule>E713 ✔️ 🛠️ - Test for membership should be 'not in'</rule>
+            <rule>E714 ✔️ 🛠️ - Test for object identity should be 'is not'</rule>
+            <rule>E721 ✔️ - Do not compare types, use 'isinstance()'</rule>
+            <rule>E722 ✔️ - Do not use bare except</rule>
+            <rule>E731 ✔️ - Do not assign a lambda expression, use a def</rule>
+          </rules>
+        </category>
+
+        <category>
+          <name>Code Style</name>
+          <rules>
+            <rule>D100 ✔️ - Missing docstring in public module</rule>
+            <rule>D101 ✔️ - Missing docstring in public class</rule>
+            <rule>D102 ✔️ - Missing docstring in public method</rule>
+            <rule>D103 ✔️ - Missing docstring in public function</rule>
+            <rule>D104 ✔️ - Missing docstring in public package</rule>
+            <rule>D105 ✔️ - Missing docstring in magic method</rule>
+            <rule>D107 ✔️ - Missing docstring in __init__</rule>
+            <rule>D200 ✔️ 🛠️ - One-line docstring should fit on one line</rule>
+            <rule>D201 ✔️ 🛠️ - No blank lines allowed before function docstring</rule>
+            <rule>D202 ✔️ 🛠️ - No blank lines allowed after function docstring</rule>
+            <rule>D205 ✔️ 🛠️ - 1 blank line required between summary line and description</rule>
+            <rule>D400 ✔️ 🛠️ - First line should end with a period</rule>
+            <rule>D401 ✔️ - First line should be in imperative mood</rule>
+            <rule>D403 ✔️ 🛠️ - First word of the first line should be capitalized</rule>
+            <rule>D415 ✔️ - First line should end with a period, question mark, or exclamation point</rule>
+          </rules>
+        </category>
+
+        <category>
+          <name>Type Checking</name>
+          <rules>
+            <rule>ANN001 ✔️ 🛠️ - Missing type annotation for function argument</rule>
+            <rule>ANN002 ✔️ 🛠️ - Missing type annotation for *args</rule>
+            <rule>ANN003 ✔️ 🛠️ - Missing type annotation for **kwargs</rule>
+            <rule>ANN101 ✔️ 🛠️ - Missing type annotation for self in method</rule>
+            <rule>ANN102 ✔️ 🛠️ - Missing type annotation for cls in classmethod</rule>
+            <rule>ANN201 ✔️ 🛠️ - Missing return type annotation for public function</rule>
+            <rule>ANN202 ✔️ 🛠️ - Missing return type annotation for private function</rule>
+            <rule>ANN204 ✔️ 🛠️ - Missing return type annotation for special method</rule>
+            <rule>ANN205 ✔️ 🛠️ - Missing return type annotation for staticmethod</rule>
+            <rule>ANN206 ✔️ 🛠️ - Missing return type annotation for classmethod</rule>
+          </rules>
+        </category>
+
+        <category>
+          <name>Import Organization</name>
+          <rules>
+            <rule>I001 ✔️ 🛠️ - Import block is un-sorted or un-formatted</rule>
+            <rule>I002 ✔️ - Missing required import</rule>
+            <rule>I003 ✔️ - Missing required relative import</rule>
+            <rule>I004 ✔️ - Missing __init__.py</rule>
+            <rule>I005 ✔️ 🛠️ - Import block is un-sorted or un-formatted (nested)</rule>
+          </rules>
+        </category>
+      </rule_categories>
+
+      <configuration_example>
         <![CDATA[
-        [tool.ruff.lint]
+        [tool.ruff]
+        # Enable all rules by default, then selectively disable
         select = [
-            "D200", # fits-on-one-line: One-line docstring should fit on one line (stable)
-            "E226", # missing-whitespace-around-arithmetic-operator: Missing whitespace around arithmetic operator (unstable)
+            "E",   # pycodestyle errors (stable)
+            "W",   # pycodestyle warnings (stable)
+            "F",   # pyflakes (stable)
+            "I",   # isort (stable)
+            "D",   # pydocstyle (stable)
+            "ANN", # flake8-annotations (stable)
         ]
+
+        # Exclude specific rules
+        ignore = [
+            "D203",  # ✔️ Conflicts with D211
+            "D213",  # ✔️ Conflicts with D212
+            "ANN101",  # ✔️ Missing type annotation for self
+            "ANN102",  # ✔️ Missing type annotation for cls
+        ]
+
+        # Line length configuration
+        line-length = 120
+
+        # Import configuration
+        [tool.ruff.isort]
+        known-first-party = ["contextforge_cli"]
+        section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+        combine-as-imports = true
+
+        # Type checking configuration
+        [tool.ruff.pyright]
+        reportMissingImports = true
+        reportMissingTypeStubs = false
+
+        # Docstring configuration
+        [tool.ruff.pydocstyle]
+        convention = "google"
+
+        # Per-rule configuration
+        [tool.ruff.per-file-ignores]
+        "tests/*" = ["D103"]  # Ignore missing docstrings in tests
+        "setup.py" = ["D100"]  # Ignore missing module docstring in setup.py
         ]]>
-      </example>
+      </configuration_example>
+
+      <best_practices>
+        <standard>Run Ruff with --fix to auto-fix supported rules</standard>
+        <standard>Use per-file-ignores for specific exceptions rather than global ignores</standard>
+        <standard>Keep line length consistent with Black formatter (default 88 or configured 120)</standard>
+        <standard>Use pre-commit hooks to enforce Ruff checks</standard>
+        <standard>Document rationale for ignored rules in comments</standard>
+        <standard>Run Ruff in strict mode for CI/CD pipelines</standard>
+        <standard>Update Ruff configuration when adding new dependencies</standard>
+      </best_practices>
+
+      <pre_commit_example>
+        <![CDATA[
+        # .pre-commit-config.yaml
+        repos:
+        - repo: https://github.com/astral-sh/ruff-pre-commit
+          rev: v0.3.4
+          hooks:
+            - id: ruff
+              args: [--fix, --exit-non-zero-on-fix]
+            - id: ruff-format
+        ]]>
+      </pre_commit_example>
     </ruff_rules>
 
     <tool_configurations>
@@ -1488,744 +1826,3 @@ democracy-exe/
                   assert any(
                       log.get("event").startswith("File created at:") for log in captured
                   ), "Expected file creation message not found in logs"
-
-                  # For messages containing variable paths or IDs, use partial matching
-                  assert any(
-                      "user_123" in log.get("event") for log in captured
-                  ), "Expected user ID in log message not found"
-          ]]>
-        </example>
-      </logging_setup>
-    </test_configuration>
-
-    <message_testing_patterns>
-      <standard>Use dpytest.message() to simulate user messages</standard>
-      <standard>Use dpytest.verify() to check bot responses</standard>
-      <standard>Always verify both message content and message type (text, embed, etc.)</standard>
-      <standard>Clear message queues between tests to prevent cross-test contamination</standard>
-      <standard>Test both direct messages and guild messages separately</standard>
-
-      <message_verification>
-        <standard>Use appropriate verification method based on expected response type</standard>
-        <example>
-          <![CDATA[
-          # Text message verification
-          await dpytest.message("?command")
-          assert dpytest.verify().message().content("Expected response")
-
-          # Embed verification
-          await dpytest.message("?embed_command")
-          assert dpytest.verify().message().embed(expected_embed)
-
-          # Multiple message verification
-          await dpytest.message("?multi_response")
-          assert dpytest.verify().message().content("First response")
-          assert dpytest.verify().message().content("Second response")
-
-          # Partial content verification
-          await dpytest.message("?partial")
-          assert dpytest.verify().message().contains().content("partial match")
-          ]]>
-        </example>
-      </message_verification>
-
-      <message_queue_management>
-        <standard>Clear message queue before each test using dpytest.empty_queue()</standard>
-        <standard>Use verify().nothing() to ensure no unexpected messages</standard>
-        <standard>Handle message queues in async context</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_no_response():
-              await dpytest.message("?invalid_command")
-              assert dpytest.verify().message().nothing()
-
-          @pytest.mark.asyncio
-          async def test_message_cleanup():
-              # Setup
-              await dpytest.empty_queue()
-
-              # Test
-              await dpytest.message("?command")
-              assert dpytest.verify().message().content("Response")
-
-              # Cleanup
-              await dpytest.empty_queue()
-          ]]>
-        </example>
-      </message_queue_management>
-
-      <error_handling>
-        <standard>Test both successful and error scenarios</standard>
-        <standard>Verify error messages are properly formatted</standard>
-        <standard>Test permission-based message handling</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_error_handling():
-              # Test invalid command
-              await dpytest.message("?invalid")
-              assert dpytest.verify().message().embed(error_embed)
-
-              # Test permission error
-              await dpytest.message("?admin_only")
-              assert dpytest.verify().message().contains().content("You don't have permission")
-
-              # Test rate limiting
-              for _ in range(5):  # Exceed rate limit
-                  await dpytest.message("?rate_limited")
-              assert dpytest.verify().message().contains().content("Rate limit exceeded")
-          ]]>
-        </example>
-      </error_handling>
-
-      <best_practices>
-        <standard>Group related message tests together in test classes</standard>
-        <standard>Test command interactions and side effects</standard>
-        <standard>Mock external services used by commands</standard>
-        <standard>Test command error states and recovery</standard>
-        <standard>Test command output formatting and localization</standard>
-      </best_practices>
-    </message_testing_patterns>
-
-    <command_testing_patterns>
-      <standard>Test both sync and async commands separately</standard>
-      <standard>Test command aliases and different prefix variations</standard>
-      <standard>Test command argument parsing and validation</standard>
-      <standard>Test command cooldowns and rate limiting</standard>
-      <standard>Test command permissions and role-based access</standard>
-
-      <command_verification>
-        <standard>Verify command registration and availability</standard>
-        <standard>Test command help and documentation</standard>
-        <standard>Verify command responses in different contexts (DM vs Guild)</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_command_registration(bot):
-              """Test command registration and help documentation."""
-              # Test command exists
-              assert "ping" in [cmd.name for cmd in bot.commands]
-
-              # Test help documentation
-              await dpytest.message("?help ping")
-              assert dpytest.verify().message().contains().content("Returns the ping of the bot")
-
-              # Test command aliases
-              cmd = bot.get_command("ping")
-              assert cmd.aliases == ["p", "latency"]
-          ]]>
-        </example>
-      </command_verification>
-
-      <argument_testing>
-        <standard>Test required vs optional arguments</standard>
-        <standard>Test argument type conversion and validation</standard>
-        <standard>Test argument error handling</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_command_arguments():
-              # Test missing required argument
-              await dpytest.message("?echo")
-              assert dpytest.verify().message().contains().content("Missing required argument")
-
-              # Test invalid argument type
-              await dpytest.message("?repeat abc 3")
-              assert dpytest.verify().message().contains().content("Converting to integer failed")
-
-              # Test valid arguments
-              await dpytest.message("?echo Hello World")
-              assert dpytest.verify().message().content("Hello World")
-
-              # Test optional arguments with defaults
-              await dpytest.message("?repeat Hello")
-              assert dpytest.verify().message().content("Hello")  # Uses default count=1
-          ]]>
-        </example>
-      </argument_testing>
-
-      <permission_testing>
-        <standard>Test commands with different permission levels</standard>
-        <standard>Test owner-only and admin-only commands</standard>
-        <standard>Test role-based command access</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_command_permissions(bot):
-              # Test admin-only command
-              await dpytest.message("?admin_command")
-              assert dpytest.verify().message().contains().content("You must have administrator permissions")
-
-              # Test with admin permissions
-              member = dpytest.get_config().members[0]
-              member.guild_permissions.administrator = True
-              await dpytest.message("?admin_command")
-              assert dpytest.verify().message().content("Admin command executed")
-
-              # Test owner-only command
-              await dpytest.message("?owner_command")
-              assert dpytest.verify().message().contains().content("This command is owner-only")
-          ]]>
-        </example>
-      </permission_testing>
-
-      <cooldown_testing>
-        <standard>Test command cooldown implementation</standard>
-        <standard>Test cooldown bypass for privileged users</standard>
-        <standard>Test cooldown error messages</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_command_cooldowns():
-              # First command use
-              await dpytest.message("?cooldown_cmd")
-              assert dpytest.verify().message().content("Command executed")
-
-              # Second command use (should be on cooldown)
-              await dpytest.message("?cooldown_cmd")
-              assert dpytest.verify().message().contains().content("is on cooldown")
-
-              # Test admin bypass
-              member = dpytest.get_config().members[0]
-              member.guild_permissions.administrator = True
-              await dpytest.message("?cooldown_cmd")
-              assert dpytest.verify().message().content("Command executed")
-          ]]>
-        </example>
-      </cooldown_testing>
-
-      <subcommand_testing>
-        <standard>Test subcommand registration and hierarchy</standard>
-        <standard>Test subcommand argument parsing</standard>
-        <standard>Test subcommand-specific permissions</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_subcommands():
-              # Test parent command
-              await dpytest.message("?settings")
-              assert dpytest.verify().message().contains().content("Available settings")
-
-              # Test subcommand
-              await dpytest.message("?settings prefix ?")
-              assert dpytest.verify().message().content("Prefix updated to ?")
-
-              # Test nested subcommand
-              await dpytest.message("?settings role add @Role")
-              assert dpytest.verify().message().content("Role added")
-          ]]>
-        </example>
-      </subcommand_testing>
-
-      <best_practices>
-        <standard>Group related command tests in test classes</standard>
-        <standard>Test command interactions and side effects</standard>
-        <standard>Mock external services used by commands</standard>
-        <standard>Test command error states and recovery</standard>
-        <standard>Test command output formatting and localization</standard>
-      </best_practices>
-    </command_testing_patterns>
-
-    <event_testing_patterns>
-      <standard>Test both synchronous and asynchronous event handlers</standard>
-      <standard>Test event registration and deregistration</standard>
-      <standard>Test event propagation and cancellation</standard>
-      <standard>Clean up event-generated files after testing</standard>
-      <standard>Test event payload handling and validation</standard>
-
-      <session_cleanup>
-        <standard>Clean up temporary files created during testing</standard>
-        <standard>Use pytest_sessionfinish for global cleanup</standard>
-        <example>
-          <![CDATA[
-          def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
-              """Code to execute after all tests.
-
-              Args:
-                  session: The pytest session object
-                  exitstatus: The exit status code
-              """
-              # Clean up attachment files created by dpytest
-              print("\n-------------------------\nClean dpytest_*.dat files")
-              fileList = glob.glob("./dpytest_*.dat")
-              for filePath in fileList:
-                  try:
-                      os.remove(filePath)
-                  except Exception:
-                      print("Error while deleting file : ", filePath)
-          ]]>
-        </example>
-      </session_cleanup>
-
-      <event_handlers>
-        <standard>Test event handler registration and execution</standard>
-        <standard>Verify event handler receives correct event data</standard>
-        <standard>Test multiple handlers for same event</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_on_message_event(bot):
-              """Test message event handling."""
-              # Send test message
-              test_message = "Hello bot!"
-              await dpytest.message(test_message)
-
-              # Verify handler received message
-              assert dpytest.verify().message().content(test_message)
-
-              # Test message processing
-              assert dpytest.get_message().content == test_message
-
-          @pytest.mark.asyncio
-          async def test_on_member_join(bot):
-              """Test member join event handling."""
-              # Add test member
-              test_member = await dpytest.member_join()
-
-              # Verify welcome message
-              assert dpytest.verify().message().contains().content("Welcome")
-
-              # Verify member in guild
-              guild = dpytest.get_config().guilds[0]
-              assert test_member in guild.members
-          ]]>
-        </example>
-      </event_handlers>
-
-      <attachment_testing>
-        <standard>Test file upload and attachment handling</standard>
-        <standard>Verify attachment metadata and content</standard>
-        <standard>Clean up attachment files after tests</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_attachment_handling(bot):
-              """Test handling of message attachments."""
-              # Create test file
-              test_content = b"Test file content"
-              await dpytest.message("?upload", file=discord.File(
-                  fp=io.BytesIO(test_content),
-                  filename="test.txt"
-              ))
-
-              # Verify bot processed attachment
-              assert dpytest.verify().message().contains().content("File uploaded")
-
-              # Verify file cleanup
-              await dpytest.empty_queue()
-              # Attachment files (dpytest_*.dat) will be cleaned up by pytest_sessionfinish
-          ]]>
-        </example>
-      </attachment_testing>
-
-      <error_handling>
-        <standard>Test error handling in event handlers</standard>
-        <standard>Verify error events are properly caught and logged</standard>
-        <standard>Test recovery from event handling failures</standard>
-        <example>
-          <![CDATA[
-          @pytest.mark.asyncio
-          async def test_event_error_handling(bot, caplog):
-              """Test error handling in events."""
-              # Trigger error condition
-              await dpytest.message("?error_trigger")
-
-              # Verify error was logged
-              assert "Error in event handler" in caplog.text
-
-              # Verify bot remains operational
-              await dpytest.message("?ping")
-              assert dpytest.verify().message().contains().content("pong")
-          ]]>
-        </example>
-      </error_handling>
-
-      <best_practices>
-        <standard>Group related event tests by functionality</standard>
-        <standard>Test both success and failure scenarios</standard>
-        <standard>Clean up resources after event testing</standard>
-        <standard>Mock external services used in event handlers</standard>
-        <standard>Test event handler order and priority</standard>
-      </best_practices>
-    </event_testing_patterns>
-
-    <test_state_management>
-      <standard>Use a global test state flag to modify behavior in test environments</standard>
-      <standard>Handle permissions differently when testing vs production</standard>
-      <standard>Allow test bypass of certain checks when appropriate</standard>
-      <standard>Add dpytest-specific state flags for Discord testing</standard>
-      <standard>Use test state to control bot behavior in test environment</standard>
-      <example>
-        <![CDATA[
-        # Global test state
-        is_dpytest = False  # Default to production mode
-        is_test_environment = False
-
-        def is_owner(ctx: commands.Context) -> bool:
-            """Check if user is owner or in test environment.
-
-            Args:
-                ctx: The command context
-
-            Returns:
-                bool: True if user is owner or in test environment
-            """
-            if is_dpytest or is_test_environment:
-                return True
-            return ctx.author.id == bot.owner_id
-
-        def check_permissions(ctx: commands.Context, *perms: str) -> bool:
-            """Check if user has required permissions or is in test environment.
-
-            Args:
-                ctx: The command context
-                *perms: Required permissions
-
-            Returns:
-                bool: True if user has permissions or in test environment
-            """
-            if is_dpytest or is_test_environment:
-                return True
-            return all(getattr(ctx.channel.permissions_for(ctx.author), perm, False) for perm in perms)
-
-        @pytest.fixture(autouse=True)
-        def setup_test_state() -> Generator[None, None, None]:
-            """Setup test state for all tests."""
-            global is_dpytest, is_test_environment
-            is_dpytest = True
-            is_test_environment = True
-            yield
-            is_dpytest = False
-            is_test_environment = False
-        ]]>
-      </example>
-    </test_state_management>
-  </discord_testing_standards>
-
-  <change_management_standards>
-    <reflection_process>
-        <standard>Before making significant changes to any file, perform a structured reflection:</standard>
-        <steps>
-            <step>
-                <name>Change Analysis</name>
-                <description>Document and justify all proposed changes</description>
-                <checklist>
-                    - What specific changes are being made?
-                    - Why are these changes necessary?
-                    - What existing patterns might be affected?
-                    - How do changes impact the overall codebase?
-                </checklist>
-            </step>
-            <step>
-                <name>Impact Assessment</name>
-                <description>Evaluate the impact of changes on functionality and knowledge</description>
-                <checklist>
-                    - Does this improve code quality or understanding?
-                    - Are valuable implementation details being removed?
-                    - Are important patterns being broken?
-                    - Is the validation framework affected?
-                </checklist>
-            </step>
-            <step>
-                <name>Knowledge Preservation</name>
-                <description>Identify and preserve valuable existing code</description>
-                <checklist>
-                    - What existing functionality must be maintained?
-                    - Which validation rules are critical?
-                    - What error handling patterns should be kept?
-                    - Which configuration options are essential?
-                </checklist>
-            </step>
-            <step>
-                <name>Recovery Planning</name>
-                <description>Plan for restoring valuable patterns if needed</description>
-                <checklist>
-                    - What specific code needs to be restored?
-                    - How to integrate with current changes?
-                    - What validation is needed?
-                    - How to verify functionality?
-                </checklist>
-            </step>
-        </steps>
-        <example>
-            <![CDATA[
-            <reflection>
-                <change_analysis>
-                    Proposed changes:
-                    1. Adding new validation rules
-                    2. Updating error messages
-                    3. Modifying configuration structure
-
-                    Justification:
-                    - Improves error handling
-                    - Enhances user feedback
-                    - Better organization
-                </change_analysis>
-
-                <impact_assessment>
-                    Benefits:
-                    - More robust validation
-                    - Clearer error messages
-
-                    Risks:
-                    - Might affect existing error handling
-                    - Could break configuration parsing
-                </impact_assessment>
-
-                <preservation_needs>
-                    Must preserve:
-                    - Existing validation logic
-                    - Error recovery mechanisms
-                    - Configuration flexibility
-                </preservation_needs>
-
-                <recovery_plan>
-                    If issues arise:
-                    1. Restore original validation
-                    2. Merge with new features
-                    3. Verify all test cases
-                </recovery_plan>
-            </reflection>
-            ]]>
-        </example>
-    </reflection_process>
-
-    <change_validation>
-        <standard>For each significant change, validate against these criteria:</standard>
-        <criteria>
-            <criterion>
-                <name>Functionality Preservation</name>
-                <description>Ensure all existing functionality remains intact</description>
-                <checks>
-                    - All public methods maintain their contracts
-                    - Error handling remains comprehensive
-                    - Configuration options are preserved
-                    - Backward compatibility is maintained
-                </checks>
-            </criterion>
-            <criterion>
-                <name>Knowledge Retention</name>
-                <description>Preserve valuable implementation knowledge</description>
-                <checks>
-                    - Complex algorithms are documented
-                    - Business logic is preserved
-                    - Edge cases are handled
-                    - Performance optimizations remain
-                </checks>
-            </criterion>
-            <criterion>
-                <name>Pattern Preservation</name>
-                <description>Maintain important code patterns</description>
-                <checks>
-                    - Design patterns are respected
-                    - Error handling patterns continue
-                    - Validation patterns are consistent
-                    - Configuration patterns are maintained
-                </checks>
-            </criterion>
-        </criteria>
-        <example>
-            <![CDATA[
-            <change_validation>
-                <functionality_check>
-                    - Verified all public methods
-                    - Tested error scenarios
-                    - Validated configuration
-                </functionality_check>
-
-                <knowledge_check>
-                    - Documentation updated
-                    - Complex logic preserved
-                    - Edge cases covered
-                </knowledge_check>
-
-                <pattern_check>
-                    - Design patterns intact
-                    - Error handling consistent
-                    - Validation framework stable
-                </pattern_check>
-            </change_validation>
-            ]]>
-        </example>
-    </change_validation>
-
-    <prevention_strategy>
-        <standard>Implement these practices to prevent accidental knowledge loss:</standard>
-        <practices>
-            <practice>
-                <name>Pre-Change Documentation</name>
-                <description>Document existing functionality before changes</description>
-                <steps>
-                    - Map current functionality
-                    - Identify critical patterns
-                    - Document edge cases
-                    - List configuration options
-                </steps>
-            </practice>
-            <practice>
-                <name>Change Impact Analysis</name>
-                <description>Analyze potential impacts before implementation</description>
-                <steps>
-                    - Review dependent code
-                    - Check test coverage
-                    - Evaluate configuration impact
-                    - Assess error handling
-                </steps>
-            </practice>
-            <practice>
-                <name>Incremental Validation</name>
-                <description>Validate changes incrementally</description>
-                <steps>
-                    - Test each change separately
-                    - Verify pattern preservation
-                    - Check error handling
-                    - Validate configuration
-                </steps>
-            </practice>
-        </practices>
-        <example>
-            <![CDATA[
-            <prevention_strategy>
-                <documentation>
-                    Current state:
-                    - Key functions: X, Y, Z
-                    - Critical patterns: A, B, C
-                    - Edge cases: 1, 2, 3
-                </documentation>
-
-                <impact_analysis>
-                    Changes affect:
-                    - Module dependencies
-                    - Error handling
-                    - Configuration options
-                </impact_analysis>
-
-                <validation_plan>
-                    Steps:
-                    1. Unit test changes
-                    2. Verify patterns
-                    3. Test edge cases
-                </validation_plan>
-            </prevention_strategy>
-            ]]>
-        </example>
-    </prevention_strategy>
-  </change_management_standards>
-
-  <pydantic_standards>
-    <standard>When using pydantic, pydantic_settings, or any code that uses get_secret_value(), add the following linter directives while preserving any existing linter directives (pylint, pyright, mypy, etc.) already present in the file:
-        ```python
-        # pylint: disable=no-name-in-module
-        # pylint: disable=no-member
-        # pyright: reportInvalidTypeForm=false
-        # pyright: reportUndefinedVariable=false
-        ```
-    </standard>
-    <explanation>These directives are necessary because:
-        - no-name-in-module: Prevents false positives with pydantic's dynamic imports
-        - no-member: Prevents false positives with dynamic attributes like get_secret_value
-        - reportInvalidTypeForm: Handles pydantic's type validation patterns
-        - reportUndefinedVariable: Manages pydantic's dynamic variable creation
-
-        Note: These directives should be added alongside any existing linter directives, not replace them.
-    </explanation>
-    <example>
-      <![CDATA[
-      # Existing linter directives remain untouched
-      # pylint: disable=too-many-arguments
-      # pyright: reportPrivateUsage=false
-
-      # Add pydantic-specific directives
-      # pylint: disable=no-name-in-module
-      # pylint: disable=no-member
-      # pyright: reportInvalidTypeForm=false
-      # pyright: reportUndefinedVariable=false
-
-      from pydantic import BaseModel, Field
-      from pydantic_settings import BaseSettings, SettingsConfigDict
-
-      class MySettings(BaseSettings):
-          """Application settings."""
-          model_config = SettingsConfigDict(
-              env_prefix="APP_",
-              env_file=".env",
-              extra="allow"
-          )
-      ]]>
-    </example>
-  </pydantic_standards>
-
-  <import_and_directive_patterns>
-    <standard>Add appropriate pyright directives based on module dependencies:</standard>
-    <rules>
-      <rule>
-        <condition>Files using Discord.py</condition>
-        <directives>
-          <![CDATA[
-          # pylint: disable=no-member
-          # pyright: reportAttributeAccessIssue=false
-          ]]>
-        </directives>
-        <explanation>Required because Discord.py uses dynamic attribute access patterns that confuse static type checkers</explanation>
-      </rule>
-      <rule>
-        <condition>Files using Pydantic</condition>
-        <directives>
-          <![CDATA[
-          # pylint: disable=no-name-in-module
-          # pylint: disable=no-member
-          # pyright: reportInvalidTypeForm=false
-          # pyright: reportUndefinedVariable=false
-          ]]>
-        </directives>
-        <explanation>Required because Pydantic uses dynamic code generation and attribute access that confuse static type checkers</explanation>
-      </rule>
-      <rule>
-        <condition>Files using both Discord.py and Pydantic</condition>
-        <directives>
-          <![CDATA[
-          # pylint: disable=no-name-in-module
-          # pylint: disable=no-member
-          # pyright: reportInvalidTypeForm=false
-          # pyright: reportUndefinedVariable=false
-          # pyright: reportAttributeAccessIssue=false
-          ]]>
-        </directives>
-        <explanation>Combines directives needed for both libraries to handle all dynamic patterns</explanation>
-      </rule>
-    </rules>
-    <best_practices>
-      <practice>Place directives at the top of the file before any imports</practice>
-      <practice>Keep existing linter directives when adding new ones</practice>
-      <practice>Add directives on their own lines, not inline with code</practice>
-      <practice>Include explanatory comments when adding complex directive combinations</practice>
-    </best_practices>
-    <example>
-      <![CDATA[
-      # Example for a file using both Discord.py and Pydantic
-
-      # pylint: disable=no-name-in-module
-      # pylint: disable=no-member
-      # pyright: reportInvalidTypeForm=false
-      # pyright: reportUndefinedVariable=false
-      # pyright: reportAttributeAccessIssue=false
-
-      from __future__ import annotations
-
-      import asyncio
-      from typing import Optional
-
-      import discord
-      from discord.ext import commands
-      from pydantic import BaseModel, Field
-
-      class MySettings(BaseModel):
-          """Example settings class."""
-          guild_id: int = Field(..., description="Discord guild ID")
-          prefix: str = Field("!", description="Command prefix")
-      ]]>
-    </example>
-  </import_and_directive_patterns>
-</python_standards>
-</cursorrules>
