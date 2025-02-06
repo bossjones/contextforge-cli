@@ -1,15 +1,62 @@
 import json
 import os
-from typing import Any, Dict
+from typing import Any, Dict, TypedDict
+
+
+class ProjectRuleInfo(TypedDict):
+    """Type definition for project rule information.
+
+    Attributes:
+        name: Project name
+        version: Project version string
+        language: Primary programming language
+        framework: Detected framework
+        type: Project type (web, mobile, library, etc.)
+    """
+
+    name: str
+    version: str
+    language: str
+    framework: str
+    type: str
 
 
 class RulesAnalyzer:
-    def __init__(self, project_path: str):
-        self.project_path = project_path
+    """Analyzer for generating project rules based on project structure and contents.
 
-    def analyze_project_for_rules(self) -> dict[str, Any]:
-        """Analyze the project and return project information for rules generation."""
-        project_info = {
+    This class analyzes a project directory to determine its characteristics
+    and generate appropriate rules for the project.
+
+    Attributes:
+        project_path: Path to the project root directory
+    """
+
+    def __init__(self, project_path: str) -> None:
+        """Initialize the RulesAnalyzer.
+
+        Args:
+            project_path: Path to the project root directory
+        """
+        self.project_path: str = project_path
+
+    def analyze_project_for_rules(self) -> ProjectRuleInfo:
+        """Analyze the project and return project information for rules generation.
+
+        Analyzes various aspects of the project including:
+        - Project name from package files or directory name
+        - Primary programming language
+        - Framework in use
+        - Project type (web, mobile, library, etc.)
+
+        Returns:
+            ProjectRuleInfo: Dictionary containing project information:
+                - name: Project name
+                - version: Project version (default: "1.0.0")
+                - language: Primary programming language
+                - framework: Detected framework
+                - type: Project type
+        """
+        project_info: ProjectRuleInfo = {
             "name": self._detect_project_name(),
             "version": "1.0.0",
             "language": self._detect_main_language(),
@@ -19,7 +66,16 @@ class RulesAnalyzer:
         return project_info
 
     def _detect_project_name(self) -> str:
-        """Detect the project name from package files or directory name."""
+        """Detect the project name from package files or directory name.
+
+        Attempts to find the project name by checking:
+        1. package.json for Node.js projects
+        2. setup.py for Python projects
+        3. Falls back to directory name if no package files found
+
+        Returns:
+            str: Detected project name
+        """
         # Try package.json
         package_json_path = os.path.join(self.project_path, "package.json")
         if os.path.exists(package_json_path):
@@ -49,8 +105,18 @@ class RulesAnalyzer:
         return os.path.basename(os.path.abspath(self.project_path))
 
     def _detect_main_language(self) -> str:
-        """Detect the main programming language used in the project."""
-        extensions = {}
+        """Detect the main programming language used in the project.
+
+        Analyzes file extensions in the project directory to determine
+        the most commonly used programming language.
+
+        Returns:
+            str: Name of the detected programming language (default: "javascript")
+
+        Note:
+            Skips common non-project directories like node_modules, venv, .git
+        """
+        extensions: dict[str, int] = {}
 
         for root, _, files in os.walk(self.project_path):
             if "node_modules" in root or "venv" in root or ".git" in root:
@@ -62,7 +128,7 @@ class RulesAnalyzer:
                     extensions[ext] = extensions.get(ext, 0) + 1
 
         # Map extensions to languages
-        FILE_EXTENSIONS = {
+        file_extensions: dict[str, str] = {
             ".js": "javascript",
             ".jsx": "javascript",
             ".ts": "typescript",
@@ -95,14 +161,34 @@ class RulesAnalyzer:
         main_language = "javascript"  # default
 
         for ext, count in extensions.items():
-            if ext in FILE_EXTENSIONS and count > max_count:
+            if ext in file_extensions and count > max_count:
                 max_count = count
-                main_language = FILE_EXTENSIONS[ext]
+                main_language = file_extensions[ext]
 
         return main_language
 
     def _detect_framework(self) -> str:
-        """Detect the framework used in the project."""
+        """Detect the framework used in the project.
+
+        Checks various dependency files to determine the framework in use:
+        - package.json for JS/TS frameworks
+        - requirements.txt for Python frameworks
+        - composer.json for PHP frameworks
+        - Other framework-specific indicators
+
+        Returns:
+            str: Name of the detected framework, or "none" if no framework detected
+
+        Note:
+            Handles multiple framework types including:
+            - JavaScript/TypeScript (React, Vue, Angular, etc.)
+            - Python (Django, Flask, FastAPI)
+            - PHP (Laravel, Symfony)
+            - C++ (Qt, Boost)
+            - C# (.NET Core, Xamarin)
+            - Swift (SwiftUI, Vapor)
+            - Kotlin (Spring Boot, Ktor)
+        """
         # Check package.json for JS/TS frameworks
         package_json_path = os.path.join(self.project_path, "package.json")
         if os.path.exists(package_json_path):
@@ -234,7 +320,24 @@ class RulesAnalyzer:
         return "none"
 
     def _detect_project_type(self) -> str:
-        """Detect the type of project (web, mobile, library, etc.)."""
+        """Detect the type of project (web, mobile, library, etc.).
+
+        Analyzes project structure and dependencies to determine the project type.
+
+        Returns:
+            str: Project type description:
+                - "mobile application"
+                - "desktop application"
+                - "web application"
+                - "library"
+                - "application" (default)
+
+        Note:
+            Detection is based on:
+            - Dependencies in package.json
+            - Presence of specific files/directories
+            - Project structure patterns
+        """
         package_json_path = os.path.join(self.project_path, "package.json")
 
         if os.path.exists(package_json_path):

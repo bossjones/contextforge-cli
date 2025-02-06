@@ -2,22 +2,40 @@ import json
 import os
 import re
 import time
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Set, TypeVar, cast
 
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-from contextforge_cli.vendored.cursorfocus.rules_analyzer import RulesAnalyzer
+from contextforge_cli.vendored.cursorfocus.rules_analyzer import (
+    ProjectRuleInfo,
+    RulesAnalyzer,
+)
+
+# Type variable for the decorator
+F = TypeVar("F", bound=Callable[..., Any])
 
 
-def retry_on_429(max_retries=3, delay=2):
-    """Decorator to retry function on 429 error with exponential backoff."""
+def retry_on_429(max_retries: int = 3, delay: int = 2) -> Callable[[F], F]:
+    """Decorator to retry function on 429 error with exponential backoff.
 
-    def decorator(func):
+    Args:
+        max_retries: Maximum number of retry attempts (default: 3)
+        delay: Initial delay in seconds before retrying (default: 2)
+
+    Returns:
+        Callable: Decorated function that implements retry logic
+
+    Note:
+        Uses exponential backoff with formula: delay * (2 ^ retry_count)
+    """
+
+    def decorator(func: F) -> F:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             retries = 0
             while retries < max_retries:
                 try:
@@ -32,18 +50,32 @@ def retry_on_429(max_retries=3, delay=2):
                     raise
             return func(*args, **kwargs)  # Last try
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator
 
 
 class RulesGenerator:
+    """Generator for project-specific rules based on code analysis.
+
+    This class analyzes project structure and code patterns to generate
+    rules that guide AI behavior in code generation and analysis.
+
+    Attributes:
+        project_path: Path to the project root directory
+        analyzer: Instance of RulesAnalyzer for project analysis
+        compiled_patterns: Dictionary of compiled regex patterns
+        model: Gemini AI model instance for rule generation
+        chat_session: Active chat session with the AI model
+        PATTERNS: Class-level dictionary of regex patterns for code analysis
+    """
+
     # Common regex patterns for all languages
     # Language groups:
     # python: Python
     # web: JavaScript, TypeScript, Java, Ruby
     # system: C/C++, C#, PHP, Swift, Objective-C
-    PATTERNS = {
+    PATTERNS: dict[str, dict[str, str]] = {
         "import": {
             "python": r"^(?:from|import)\s+(?P<module>[a-zA-Z0-9_\.]+)",  # Python
             "web": r'(?:import\s+.*?from\s+[\'"](?P<module>[^\'\"]+)[\'"]|require\s*\([\'"](?P<module2>[^\'\"]+)[\'"]\)|(?:import|require)\s+.*?[\'"](?P<module3>[^\'\"]+)[\'"]|import\s+(?:static\s+)?(?P<module4>[a-zA-Z0-9_\.]+(?:\.[*])?)|require\s+[\'"](?P<module5>[^\'\"]+)[\'"])',  # Js/Ts/Java/Ruby
@@ -82,12 +114,21 @@ class RulesGenerator:
         },
     }
 
-    def __init__(self, project_path: str):
-        self.project_path = project_path
-        self.analyzer = RulesAnalyzer(project_path)
+    def __init__(self, project_path: str) -> None:
+        """Initialize the RulesGenerator.
+
+        Args:
+            project_path: Path to the project root directory
+
+        Raises:
+            ValueError: If GEMINI_API_KEY environment variable is not set
+            Exception: If there's an error initializing the Gemini AI model
+        """
+        self.project_path: str = project_path
+        self.analyzer: RulesAnalyzer = RulesAnalyzer(project_path)
 
         # Precompile regex patterns
-        self.compiled_patterns = self._compile_patterns()
+        self.compiled_patterns: dict[str, dict[str, Any]] = self._compile_patterns()
 
         # Load environment variables from .env
         load_dotenv()
@@ -115,8 +156,19 @@ class RulesGenerator:
             raise
 
     def _compile_patterns(self) -> dict[str, dict[str, Any]]:
-        """Precompile all regex patterns for better performance."""
-        compiled = {}
+        """Precompile all regex patterns for better performance.
+
+        Returns:
+            Dict[str, Dict[str, Any]]: Dictionary of compiled regex patterns organized by:
+                - Category (import, class, function, etc.)
+                - Language group (python, web, system)
+                - Pattern type (method, variable, error, etc.)
+
+        Note:
+            Patterns are compiled using re.compile() for improved performance
+            during repeated pattern matching operations.
+        """
+        compiled: dict[str, dict[str, Any]] = {}
 
         # Compile patterns for each category
         for category, patterns in self.PATTERNS.items():
@@ -142,12 +194,39 @@ class RulesGenerator:
         return compiled
 
     def _get_timestamp(self) -> str:
-        """Get current timestamp in standard format."""
+        """Get current timestamp in standard format.
+
+        Returns:
+            str: Formatted timestamp string in format "Month DD, YYYY at HH:MM AM/PM"
+        """
         return datetime.now().strftime("%B %d, %Y at %I:%M %p")
 
     def _analyze_project_structure(self) -> dict[str, Any]:
-        """Analyze project structure and collect detailed information."""
-        structure = {
+        """Analyze project structure and collect detailed information.
+
+        Performs a deep analysis of the project structure, including:
+        - File organization and hierarchy
+        - Dependencies and frameworks
+        - Language statistics
+        - Code patterns and organization
+        - Directory structure patterns
+
+        Returns:
+            Dict[str, Any]: Project structure information containing:
+                - files: List of code files
+                - dependencies: Dictionary of project dependencies
+                - frameworks: List of detected frameworks
+                - languages: Dictionary of language statistics
+                - config_files: List of configuration files
+                - code_contents: Dictionary of file contents
+                - directory_structure: Directory hierarchy information
+                - language_stats: Language statistics by directory
+                - patterns: Dictionary of detected code patterns
+
+        Note:
+            Skips common non-project directories like node_modules, venv, .git
+        """
+        structure: dict[str, Any] = {
             "files": [],
             "dependencies": {},
             "frameworks": [],
@@ -175,7 +254,7 @@ class RulesGenerator:
         }
 
         # Track directory statistics
-        dir_stats = {}
+        dir_stats: dict[str, dict[str, Any]] = {}
 
         # Analyze each file
         for root, dirs, files in os.walk(self.project_path):
@@ -286,8 +365,15 @@ class RulesGenerator:
         return structure
 
     def _get_language_from_ext(self, ext: str) -> str:
-        """Get programming language from file extension."""
-        lang_map = {
+        """Get programming language from file extension.
+
+        Args:
+            ext: File extension (including dot)
+
+        Returns:
+            str: Programming language name or "Unknown" if not recognized
+        """
+        lang_map: dict[str, str] = {
             ".py": "Python",
             ".js": "JavaScript",
             ".ts": "TypeScript",
@@ -310,9 +396,23 @@ class RulesGenerator:
     def _analyze_file(
         self, content: str, rel_path: str, structure: dict[str, Any], language: str
     ) -> None:
-        """Generic file analyzer that handles all languages."""
+        """Generic file analyzer that handles all languages.
+
+        Args:
+            content: File content to analyze
+            rel_path: Relative path to the file
+            structure: Project structure dictionary to update
+            language: Programming language of the file
+
+        Note:
+            Updates the structure dictionary with:
+            - Detected patterns (imports, classes, functions)
+            - Language-specific patterns
+            - Framework-specific patterns
+            - Code organization patterns
+        """
         # Map language to pattern group
-        pattern_groups = {
+        pattern_groups: dict[str, str] = {
             "python": "python",
             "javascript": "web",
             "typescript": "web",
@@ -335,7 +435,7 @@ class RulesGenerator:
 
             for match in matches:
                 try:
-                    info = {}
+                    info: dict[str, Any] = {}
                     # Get all named groups
                     groups = match.groupdict()
 
@@ -397,8 +497,20 @@ class RulesGenerator:
 
     def _analyze_directory_patterns(
         self, structure: dict[str, Any], dir_stats: dict[str, Any]
-    ):
-        """Analyze directory organization patterns."""
+    ) -> None:
+        """Analyze directory organization patterns.
+
+        Args:
+            structure: Project structure dictionary to update
+            dir_stats: Directory statistics dictionary
+
+        Note:
+            Updates structure with directory patterns including:
+            - Naming conventions
+            - Directory purposes (testing, utilities, domain, etc.)
+            - Language distribution
+            - Code metrics
+        """
         for dir_path, stats in dir_stats.items():
             if not dir_path:  # Skip root directory
                 continue
@@ -417,7 +529,7 @@ class RulesGenerator:
                 pattern = "mixed"
 
             # Analyze directory purpose
-            purpose = []
+            purpose: list[str] = []
             if any(x in dir_name.lower() for x in ["test", "spec", "mock"]):
                 purpose.append("testing")
             if any(
@@ -446,7 +558,29 @@ class RulesGenerator:
 
     @retry_on_429(max_retries=3, delay=2)
     def _generate_ai_rules(self, project_info: dict[str, Any]) -> dict[str, Any]:
-        """Generate rules using Gemini AI based on project analysis."""
+        """Generate rules using Gemini AI based on project analysis.
+
+        Args:
+            project_info: Dictionary containing project information
+
+        Returns:
+            Dict[str, Any]: AI-generated rules containing:
+                - ai_behavior: Dictionary of behavior rules
+                    - code_generation: Code generation rules
+                    - error_handling: Error handling preferences
+                    - performance: Performance optimization rules
+                    - suggest_patterns: Pattern suggestions
+                    - module_organization: Module organization rules
+
+        Raises:
+            ValueError: If AI response format is invalid
+            json.JSONDecodeError: If AI response cannot be parsed as JSON
+            Exception: For other errors during rule generation
+
+        Note:
+            Uses Gemini AI to analyze project structure and generate
+            appropriate rules for code generation and analysis.
+        """
         try:
             # Analyze project
             project_structure = self._analyze_project_structure()
@@ -596,10 +730,24 @@ Critical Guidelines for AI:
 
     @retry_on_429(max_retries=3, delay=2)
     def _generate_project_description(self, project_structure: dict[str, Any]) -> str:
-        """Generate project description using AI based on project analysis."""
+        """Generate project description using AI based on project analysis.
+
+        Args:
+            project_structure: Dictionary containing project structure information
+
+        Returns:
+            str: AI-generated project description (2-3 sentences)
+
+        Note:
+            Description focuses on:
+            - Project's main purpose and functionality
+            - Key technical features
+            - Target users and use cases
+            - Unique characteristics
+        """
         try:
             # Analyze core modules
-            core_modules = []
+            core_modules: list[dict[str, Any]] = []
             for file in project_structure.get("files", []):
                 if file.endswith(".py") and not any(
                     x in file.lower() for x in ["setup", "config", "test"]
@@ -625,7 +773,7 @@ Critical Guidelines for AI:
                     core_modules.append(module_info)
 
             # Analyze main patterns
-            main_patterns = {
+            main_patterns: dict[str, list[Any]] = {
                 "error_handling": project_structure.get("patterns", {}).get(
                     "error_patterns", []
                 ),
@@ -683,7 +831,25 @@ Do not include technical metrics in the description."""
     def _generate_markdown_rules(
         self, project_info: dict[str, Any], ai_rules: dict[str, Any]
     ) -> str:
-        """Generate rules in markdown format."""
+        """Generate rules in markdown format.
+
+        Args:
+            project_info: Dictionary containing project information
+            ai_rules: Dictionary containing AI-generated rules
+
+        Returns:
+            str: Markdown-formatted rules document
+
+        Note:
+            Generates a structured markdown document containing:
+            - Project information
+            - Project description
+            - AI behavior rules
+            - Code generation guidelines
+            - Error handling patterns
+            - Performance optimization rules
+            - Module organization guidelines
+        """
         timestamp = self._get_timestamp()
         description = project_info.get(
             "description",
@@ -773,9 +939,26 @@ Do not include technical metrics in the description."""
         return markdown
 
     def generate_rules_file(
-        self, project_info: dict[str, Any] = None, format: str = "json"
+        self, project_info: dict[str, Any] | None = None, format: str = "json"
     ) -> str:
-        """Generate the .cursorrules file based on project analysis and AI suggestions."""
+        """Generate the .cursorrules file based on project analysis and AI suggestions.
+
+        Args:
+            project_info: Optional dictionary containing project information.
+                        If None, will use analyzer to gather information.
+            format: Output format, either "json" or "markdown" (default: "json")
+
+        Returns:
+            str: Path to the generated rules file
+
+        Raises:
+            Exception: If rule generation fails
+
+        Note:
+            The generated file will be named .cursorrules and placed in the project root.
+            The file contains AI-generated rules and guidelines for code generation
+            and analysis based on the project's patterns and structure.
+        """
         try:
             # Use analyzer if no project_info provided
             if project_info is None:
@@ -817,7 +1000,23 @@ Do not include technical metrics in the description."""
     def _analyze_web_patterns(
         self, content: str, rel_path: str, structure: dict[str, Any]
     ) -> None:
-        """Analyze React/Next.js specific patterns."""
+        """Analyze React/Next.js specific patterns in web-related files.
+
+        Args:
+            content: File content to analyze
+            rel_path: Relative path to the file
+            structure: Project structure dictionary to update
+
+        Note:
+            Updates structure with:
+            - Interface/type definitions
+            - React components
+            - React hooks
+            - Next.js data fetching methods
+            - Page/route structure
+            - Layout components
+            - Styled components
+        """
         # Find interfaces and types
         for match in self.compiled_patterns["common"]["interface"].finditer(content):
             structure["patterns"]["class_patterns"].append(

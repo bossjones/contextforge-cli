@@ -3,12 +3,55 @@ import argparse
 import json
 import logging
 import os
+from typing import Any, Dict, List, Optional, TypedDict
 
 from contextforge_cli.vendored.cursorfocus.project_detector import scan_for_projects
 
 
-def setup_cursorfocus():
-    """Set up CursorFocus for your projects."""
+class ProjectConfig(TypedDict):
+    """Type definition for project configuration.
+
+    Attributes:
+        name: Project name
+        project_path: Path to the project directory
+        update_interval: Time between updates in seconds
+        max_depth: Maximum directory depth to scan
+    """
+
+    name: str
+    project_path: str
+    update_interval: int
+    max_depth: int
+
+
+class Config(TypedDict):
+    """Type definition for global configuration.
+
+    Attributes:
+        projects: List of project configurations
+        ignored_directories: List of directory names to ignore
+        ignored_files: List of file patterns to ignore
+    """
+
+    projects: list[ProjectConfig]
+    ignored_directories: list[str]
+    ignored_files: list[str]
+
+
+def setup_cursorfocus() -> None:
+    """Set up CursorFocus for your projects.
+
+    This function is the main entry point for the CursorFocus setup utility.
+    It handles command-line arguments for:
+    - Adding/removing projects
+    - Scanning directories for projects
+    - Listing configured projects
+    - Importing/exporting configurations
+    - Updating project settings
+
+    Note:
+        Creates or updates a config.json file in the script directory.
+    """
     parser = argparse.ArgumentParser(description="Set up CursorFocus for your projects")
     parser.add_argument(
         "--projects", "-p", nargs="+", help="Paths to projects to monitor"
@@ -48,7 +91,7 @@ def setup_cursorfocus():
     args = parser.parse_args()
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(script_dir, "config.json")
-    config = load_or_create_config(config_path)
+    config: Config = load_or_create_config(config_path)
 
     if "projects" not in config:
         config["projects"] = []
@@ -106,8 +149,9 @@ def setup_cursorfocus():
             if selection in ["q", "quit", "exit"]:
                 return
 
+            indices: list[int] = []
             if selection == "all":
-                indices = range(len(found_projects))
+                indices = list(range(len(found_projects)))
             else:
                 try:
                     indices = [int(i) - 1 for i in selection.split()]
@@ -124,14 +168,13 @@ def setup_cursorfocus():
                 if not any(
                     p["project_path"] == project["path"] for p in config["projects"]
                 ):
-                    config["projects"].append(
-                        {
-                            "name": project["name"],
-                            "project_path": project["path"],
-                            "update_interval": 60,
-                            "max_depth": 3,
-                        }
-                    )
+                    new_project: ProjectConfig = {
+                        "name": project["name"],
+                        "project_path": project["path"],
+                        "update_interval": 60,
+                        "max_depth": 3,
+                    }
+                    config["projects"].append(new_project)
                     added += 1
 
             if added > 0:
@@ -147,7 +190,7 @@ def setup_cursorfocus():
 
     # Add/update projects
     if args.projects:
-        valid_projects = []
+        valid_projects: list[ProjectConfig] = []
         for i, project_path in enumerate(args.projects):
             abs_path = os.path.abspath(project_path)
             if not os.path.exists(abs_path):
@@ -159,7 +202,7 @@ def setup_cursorfocus():
                 if args.names and i < len(args.names)
                 else get_project_name(abs_path)
             )
-            project_config = {
+            project_config: ProjectConfig = {
                 "name": project_name,
                 "project_path": abs_path,
                 "update_interval": args.update_interval if args.update_interval else 60,
@@ -169,7 +212,7 @@ def setup_cursorfocus():
 
         names = [p["name"] for p in valid_projects]
         if len(names) != len(set(names)):
-            name_counts = {}
+            name_counts: dict[str, int] = {}
             for project in valid_projects:
                 base_name = project["name"]
                 if base_name in name_counts:
@@ -203,16 +246,27 @@ def setup_cursorfocus():
     print(f"\nRun: python {os.path.join(script_dir, 'focus.py')}")
 
 
-def load_or_create_config(config_path):
-    """Load existing config or create default one."""
+def load_or_create_config(config_path: str) -> Config:
+    """Load existing config or create default one.
+
+    Args:
+        config_path: Path to the configuration file
+
+    Returns:
+        Config: Loaded configuration or default configuration if file doesn't exist
+    """
     if os.path.exists(config_path):
         with open(config_path) as f:
             return json.load(f)
     return get_default_config()
 
 
-def get_default_config():
-    """Return default configuration."""
+def get_default_config() -> Config:
+    """Return default configuration.
+
+    Returns:
+        Config: Default configuration with empty projects list and standard ignore patterns
+    """
     return {
         "projects": [],
         "ignored_directories": [
@@ -229,14 +283,23 @@ def get_default_config():
     }
 
 
-def save_config(config_path, config):
-    """Save configuration to file."""
+def save_config(config_path: str, config: Config) -> None:
+    """Save configuration to file.
+
+    Args:
+        config_path: Path where to save the configuration
+        config: Configuration dictionary to save
+    """
     with open(config_path, "w") as f:
         json.dump(config, f, indent=4)
 
 
-def list_projects(projects):
-    """Display list of configured projects."""
+def list_projects(projects: list[ProjectConfig]) -> None:
+    """Display list of configured projects.
+
+    Args:
+        projects: List of project configurations to display
+    """
     if not projects:
         print("\n📁 No projects configured.")
         return
@@ -249,14 +312,19 @@ def list_projects(projects):
         print(f"     Max depth: {project['max_depth']} levels")
 
 
-def remove_projects(config, targets):
-    """Remove specific projects by name or index."""
+def remove_projects(config: Config, targets: list[str]) -> None:
+    """Remove specific projects by name or index.
+
+    Args:
+        config: Global configuration dictionary
+        targets: List of project names or indices to remove
+    """
     if not config["projects"]:
         print("\n⚠️ No projects configured.")
         return
 
-    remaining_projects = []
-    removed = []
+    remaining_projects: list[ProjectConfig] = []
+    removed: list[str] = []
 
     for project in config["projects"]:
         should_keep = True
@@ -286,8 +354,15 @@ def remove_projects(config, targets):
         print("\n⚠️ No matching projects found.")
 
 
-def confirm_action(message):
-    """Ask for user confirmation."""
+def confirm_action(message: str) -> bool:
+    """Ask for user confirmation.
+
+    Args:
+        message: Message to display to the user
+
+    Returns:
+        bool: True if user confirms, False otherwise
+    """
     while True:
         response = input(f"\n{message} (y/n): ").lower()
         if response in ["y", "yes"]:
@@ -296,8 +371,15 @@ def confirm_action(message):
             return False
 
 
-def get_project_name(project_path):
-    """Get project name from directory name, with some cleanup."""
+def get_project_name(project_path: str) -> str:
+    """Get project name from directory name, with some cleanup.
+
+    Args:
+        project_path: Path to the project directory
+
+    Returns:
+        str: Cleaned up project name in title case
+    """
     # Get the base directory name
     base_name = os.path.basename(os.path.normpath(project_path))
 
@@ -313,8 +395,13 @@ def get_project_name(project_path):
     return " ".join(word.capitalize() for word in words)
 
 
-def show_project_info(projects, target):
-    """Display detailed information about a specific project."""
+def show_project_info(projects: list[ProjectConfig], target: str) -> None:
+    """Display detailed information about a specific project.
+
+    Args:
+        projects: List of project configurations
+        target: Project name or index to show information for
+    """
     if not projects:
         print("\n⚠️ No projects configured.")
         return
@@ -350,8 +437,13 @@ def show_project_info(projects, target):
             print(f"  Framework: {project_type['framework']}")
 
 
-def export_config(config, export_path):
-    """Export configuration to a file."""
+def export_config(config: Config, export_path: str) -> None:
+    """Export configuration to a file.
+
+    Args:
+        config: Configuration to export
+        export_path: Path where to save the exported configuration
+    """
     try:
         with open(export_path, "w") as f:
             json.dump(config, f, indent=4)
@@ -360,15 +452,20 @@ def export_config(config, export_path):
         print(f"\n❌ Failed to export configuration: {str(e)}")
 
 
-def import_config(config, import_path):
-    """Import configuration from a file."""
+def import_config(config: Config, import_path: str) -> None:
+    """Import configuration from a file.
+
+    Args:
+        config: Current configuration to update
+        import_path: Path to the configuration file to import
+    """
     try:
         with open(import_path) as f:
-            imported = json.load(f)
+            imported: Config = json.load(f)
 
         if "projects" in imported:
             # Validate and update paths
-            valid_projects = []
+            valid_projects: list[ProjectConfig] = []
             for project in imported["projects"]:
                 if all(
                     key in project
@@ -393,8 +490,15 @@ def import_config(config, import_path):
         print(f"\n❌ Failed to import configuration: {str(e)}")
 
 
-def detect_project_type(project_path):
-    """Detect project type using project_detector."""
+def detect_project_type(project_path: str) -> dict[str, Any] | None:
+    """Detect project type using project_detector.
+
+    Args:
+        project_path: Path to the project directory
+
+    Returns:
+        Optional[Dict[str, Any]]: Project type information if detected, None otherwise
+    """
     try:
         projects = scan_for_projects(project_path, 1)
         return projects[0] if projects else None
