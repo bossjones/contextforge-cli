@@ -1,0 +1,52 @@
+site_name: contextforge-cli
+repo_url: https://github.com/bossjones/contextforge-cli
+site_url: https://bossjones.github.io/contextforge-cli
+site_description: contextforge_cli is an advanced, agentic Python application leveraging LangChain and LangGraph to orchestrate and manage a network of AI agents and subgraphs. This system emulates the principles of "managed democracy" from the Helldivers universe, automating decision-making processes and task delegation across multiple AI entities. Based on Helldivers.
+site_author: Malcolm Jones
+edit_uri: edit/main/docs/
+repo_name: bossjones/contextforge-cli
+copyright: Maintained by <a href="https://bossjones.com">bossjones</a>.
+
+nav:
+    - Home: index.md
+    - Modules: modules.md
+plugins:
+    - search
+    - mkdocstrings:
+          handlers:
+              python:
+                  paths: [contextforge_cli]
+theme:
+    name: material
+    feature:
+        tabs: true
+    palette:
+        - media: '(prefers-color-scheme: light)'
+          scheme: default
+          primary: white
+          accent: deep orange
+          toggle:
+              icon: material/brightness-7
+              name: Switch to dark mode
+        - media: '(prefers-color-scheme: dark)'
+          scheme: slate
+          primary: black
+          accent: deep orange
+          toggle:
+              icon: material/brightness-4
+              name: Switch to light mode
+    icon:
+        repo: fontawesome/brands/github
+
+extra:
+    social:
+        - icon: fontawesome/brands/github
+          link: https://github.com/bossjones/contextforge-cli
+        - icon: fontawesome/brands/python
+          link: https://pypi.org/project/contextforge-cli
+
+markdown_extensions:
+    - toc:
+          permalink: true
+    - pymdownx.arithmatex:
+          generic: true

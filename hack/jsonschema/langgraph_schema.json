@@ -1,0 +1,53 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "dependencies": {
+        "type": "array",
+        "description": "Required. Array of dependencies for LangGraph API server.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "graphs": {
+        "type": "object",
+        "description": "Required. Mapping from graph ID to path where the compiled graph or a function that makes a graph is defined.",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "env": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Path to .env file"
+          },
+          {
+            "type": "object",
+            "description": "Mapping from environment variable to its value",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "python_version": {
+        "type": "string",
+        "enum": ["3.11", "3.12"],
+        "default": "3.11",
+        "description": "Python version to use"
+      },
+      "pip_config_file": {
+        "type": "string",
+        "description": "Path to pip config file"
+      },
+      "dockerfile_lines": {
+        "type": "array",
+        "description": "Array of additional lines to add to Dockerfile following the import from parent image",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": ["dependencies", "graphs"]
+  }

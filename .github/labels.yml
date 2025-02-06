@@ -1,0 +1,212 @@
+---
+# SOURCE: https://github.com/cloudflare/cloudflare-python
+- name: 'kind: breaking-change'
+  description: ''
+  color: e11d21
+- name: 'kind: bug'
+  description: Categorizes issue or PR as related to a bug.
+  color: e11d21
+- name: 'kind: generation-issue'
+  description: Categorizes issue or PR as related to the generation pipeline.
+  color: e11d21
+- name: 'kind: documentation'
+  description: Categorizes issue or PR as related to documentation.
+  color: d4c5f9
+- name: 'kind: enhancement'
+  description: Categorizes issue or PR as related to improving an existing feature.
+  color: d4c5f9
+- name: 'kind: failing-test'
+  description: |
+    Categorizes issue or PR as related to a consistently or frequently failing
+    test.
+  color: e11d21
+- name: 'kind: flakey'
+  description: Categorizes issue or PR as related to a flaky test.
+  color: e11d21
+- name: 'kind: regression'
+  description: Categorizes issue or PR as related to a regression from a prior release.
+  color: e11d21
+- name: 'kind: support'
+  description: Categorizes issue or PR as related to user support.
+  color: e11d21
+- name: 'lifecycle: stale'
+  description: ''
+  color: e11d21
+- name: 'likelihood: all'
+  description: Categorizes issue or PR as impacting all users.
+  color: F7D2B6
+- name: 'likelihood: few'
+  description: Categorizes issue or PR as impacting a small portion of users.
+  color: F7D2B6
+- name: 'likelihood: low'
+  description: Categorizes issue or PR as impacting a low portion of users.
+  color: F7D2B6
+- name: 'likelihood: many'
+  description: Categorizes issue or PR as impacting many users.
+  color: F7D2B6
+- name: 'likelihood: most'
+  description: Categorizes issue or PR as impacting most users.
+  color: F7D2B6
+- name: needs-triage
+  description: 'Indicates an issue or PR lacks a `triage: foo` label and requires
+    one.'
+  color: ef9ed3
+- name: spam
+  description: ''
+  color: e6f99f
+- name: 'triage: accepted'
+  description: Indicates an issue or PR is ready to be actively worked on.
+  color: fbca04
+- name: 'triage: duplicate'
+  description: Indicates an issue is a duplicate of other open issue.
+  color: fbca04
+- name: 'triage: needs-information'
+  description: Indicates an issue needs more information in order to work on it.
+  color: fbca04
+- name: 'triage: not-reproducible'
+  description: Indicates an issue can not be reproduced as described.
+  color: fbca04
+- name: 'triage: unresolved'
+  description: Indicates an issue that can not or will not be resolved.
+  color: fbca04
+- name: 'workflow: needs-review'
+  description: Indicates an issue or PR needs review or feedback.
+  color: 006b75
+- name: 'workflow: pending-cloudflare-response'
+  description: Indicates an issue or PR requires a response from the Cloudflare
+    team.
+  color: 006b75
+- name: 'workflow: pending-contributor-response'
+  description: Indicates an issue or PR requires a response from a contributor.
+  color: 006b75
+- name: 'workflow: pending-maintainer-response'
+  description: Indicates an issue or PR requires a response from the maintainer
+    team.
+  color: 006b75
+- name: 'workflow: pending-op-response'
+  description: Indicates an issue or PR requires a response from the original poster.
+  color: 006b75
+- name: 'workflow: pending-public-documentation'
+  description: |
+    Indicates an issue or PR requires changes to public documentation confirming
+    suitability for use.
+  color: 006b75
+- name: 'workflow: pending-upstream-library'
+  description: Indicates an issue or PR requires changes from an upstream library.
+  color: 006b75
+- name: 'workflow: pending-schemas'
+  description: Indicates an issue or PR requires changes from an upstream library.
+  color: 006b75
+- name: 'workflow: synced'
+  description: ''
+  color: 006b75
+
+# autorelease management
+- name: 'autorelease: custom version'
+  color: ededed
+- name: 'autorelease: pending'
+  color: ededed
+- name: 'autorelease: pre-release'
+  color: ededed
+- name: 'autorelease: tagged'
+  color: ededed
+
+# SOURCE: https://dalezak.medium.com/github-pro-tips-for-your-development-team-9fe0f0a48afb
+# Type labels indicate the kind of issue, I selected these different color codes so they are easily distinguishable.
+#  Type: Bug  # 333333
+#  Type: Design  # 6a1051
+#  Type: Enhancement  # 58508d
+#  Type: External  # bfdadc
+#  Type: Feature  # 216583
+#  Type: Maintenance  # a0855b
+#  Type: Pull Request  # 6ba8a9
+#  Type: Question  # 50b6bb
+#  Type: Research  # ac8daf
+# bossjones
+- name: 'Type: Bug'
+  description: ''
+  color: 333333
+- name: 'Type: Design'
+  description: ''
+  color: 6a1051
+- name: 'Type: Enhancement'
+  description: ''
+  color: 58508d
+- name: 'Type: External'
+  description: ''
+  color: bfdadc
+- name: 'Type: Feature'
+  description: ''
+  color: 216583
+- name: 'Type: Maintenance'
+  description: ''
+  color: a0855b
+- name: 'Type: Pull Request'
+  description: ''
+  color: 6ba8a9
+- name: 'Type: Question'
+  description: ''
+  color: 50b6bb
+- name: 'Type: Research'
+  description: ''
+  color: ac8daf
+
+# Priority labels specify the level of importance using color codes varying from yellow to red so they are easily identifiable.
+#  Priority: Critical  # 7c0a02
+#  Priority: High  # b22222
+#  Priority: Medium  # e88a1a
+#  Priority: Low  # f1bc31
+- name: 'Priority: Critical'
+  description: ''
+  color: 7c0a02
+- name: 'Priority: High'
+  description: ''
+  color: b22222
+- name: 'Priority: Medium'
+  description: ''
+  color: e88a1a
+- name: 'Priority: Low'
+  description: ''
+  color: f1bc31
+
+# Size labels indicate the level of effort using shades of green where Small is a few hours, Medium is around a day, and Large is multiple days of effort. Although some people prefer fibonacci points for estimates, I like this approach for its simplicity. For example, you should probably only schedule one Large issue to a person if you're doing weekly sprints, where as they could probably do a couple Medium issues in a week.
+
+#  Size: Small  # 76a665
+#  Size: Medium  # 227066
+#  Size: Large  # 265961
+- name: 'Size: Small'
+  description: ''
+  color: 76a665
+- name: 'Size: Medium'
+  description: ''
+  color: 227066
+- name: 'Size: Large'
+  description: ''
+  color: 265961
+
+# Status labels using shades of pink to indicate which issues were fixed or not, this is helpful when reviewing old issues that are closed.
+#  Status: Resolved  # fad6d6
+#  Status: Unresolved  # e99695
+- name: 'Status: Resolved'
+  description: ''
+  color: fad6d6
+- name: 'Status: Unresolved'
+  description: ''
+  color: e99695
+
+# App labels indicate the source of the issue, which can be helpful when you have multiple repos on the same Project board.
+#  App: Backend  # cccccc
+#  App: Frontend  # cccccc
+#  App: Database  # cccccc
+#  App: Mobile  # cccccc
+- name: 'App: Backend'
+  description: ''
+  color: cccccc
+- name: 'App: Frontend'
+  description: ''
+  color: cccccc
+- name: 'App: Database'
+  description: ''
+  color: cccccc
+- name: 'App: Mobile'
+  description: ''

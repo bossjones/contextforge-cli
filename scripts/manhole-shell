@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+_MANHOLE_SOCKET=$(fd --color=never manhole /tmp)
+
+uv run manhole-cli ${_MANHOLE_SOCKET}
+# nc -U ${_MANHOLE_SOCKET}
+# socat - unix-connect:${_MANHOLE_SOCKET}
+# socat readline unix-connect:${_MANHOLE_SOCKET}

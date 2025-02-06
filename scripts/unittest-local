@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2096
+# shellcheck disable=SC3010
+
+# set -x
+# if [[ "$LOCAL_TEST_DEBUG" = 1 ]]; then
+#     pytest --verbose --pdb --pdbcls bpdb:BPdb  --showlocals --tb=short --cov-append --cov-report=term-missing --junitxml=../junit/test-results.xml --cov-report=xml:../cov.xml --cov-report=html:../htmlcov --cov-report=annotate:../cov_annotate --cov=.
+# else
+#     pytest
+# fi
+
+
+###########################
+
+
+if [[ "$LOCAL_TEST_ENABLE_EVALS" = 1 ]]; then
+    echo "LOCAL_PYTEST_EVAL_ARGS is set. Configuring eval test to run."
+    export LOCAL_PYTEST_EVAL_ARGS=" --slow -m evals "
+else
+    echo "LOCAL_PYTEST_EVAL_ARGS is not set. Skipping eval tests."
+    export LOCAL_PYTEST_EVAL_ARGS=""
+fi
+
+echo -e "Running CI tests locally ... \n"
+set -x
+if [[ "$LOCAL_TEST_DEBUG" = 1 ]]; then
+        ###################################################################################################################
+    # If you have bpython installed locally use it as the debugger for a richer debugging experience.
+    ###################################################################################################################
+    if uv run python -c "import bpdb" &> /dev/null; then
+        # run regular pytest suite w/o evals enabled
+        uv run pytest --verbose --pdb --pdbcls bpdb:BPdb --showlocals --tb=short --cov-append --cov-report=term-missing --junitxml=../junit/test-results.xml --cov-report=xml:../cov.xml --cov-report=html:../htmlcov --cov-report=annotate:../cov_annotate --cov=.
+
+        # run evals if configured. This simulates the entire CI run locally.
+        if [[ "$LOCAL_TEST_ENABLE_EVALS" = 1 ]]; then
+            echo -e "\n LOCAL_PYTEST_EVAL_ARGS is set. Configuring eval test to run.\n\n"
+            uv run pytest --verbose --pdb --pdbcls bpdb:BPdb --showlocals --tb=short --cov-append --cov-report=term-missing --junitxml=../junit/test-results.xml --cov-report=xml:../cov.xml --cov-report=html:../htmlcov --cov-report=annotate:../cov_annotate ${LOCAL_PYTEST_EVAL_ARGS} --cov=.
+        fi
+    elif uv run python -c "import IPython" &> /dev/null; then
+        # run regular pytest suite w/o evals enabled
+        uv run pytest --verbose --pdb --pdbcls IPython.terminal.debugger:TerminalPdb --showlocals --tb=short --cov-append --cov-report=term-missing --junitxml=../junit/test-results.xml --cov-report=xml:../cov.xml --cov-report=html:../htmlcov --cov-report=annotate:../cov_annotate --cov=.
+
+        # run evals if configured. This simulates the entire CI run locally.
+        if [[ "$LOCAL_TEST_ENABLE_EVALS" = 1 ]]; then
+            echo -e "\n LOCAL_PYTEST_EVAL_ARGS is set. Configuring eval test to run.\n\n"
+            uv run pytest --verbose --pdb --pdbcls IPython.terminal.debugger:TerminalPdb --showlocals --tb=short --cov-append --cov-report=term-missing --junitxml=../junit/test-results.xml --cov-report=xml:../cov.xml --cov-report=html:../htmlcov --cov-report=annotate:../cov_annotate ${LOCAL_PYTEST_EVAL_ARGS} --cov=.
+        fi
+    else
+        echo "LOCAL_TEST_DEBUG=1 and no suitable debugger found. Please install bpython or IPython."
+        exit 1
+    fi
+else
+    # run regular pytest suite w/o evals enabled
+    uv run pytest ${LOCAL_PYTEST_EVAL_ARGS}
+
+    # run evals if configured. This simulates the entire CI run locally.
+    if [[ "$LOCAL_TEST_ENABLE_EVALS" = 1 ]]; then
+        echo -e "\n LOCAL_PYTEST_EVAL_ARGS is set. Configuring eval test to run.\n\n"
+        uv run pytest ${LOCAL_PYTEST_EVAL_ARGS}
+    fi
+fi

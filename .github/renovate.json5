@@ -1,0 +1,89 @@
+{
+  // Specifies the schema for this configuration file
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  // Enables the dependency dashboard feature
+  dependencyDashboard: true,
+  // Suppresses notifications for PR edits
+  suppressNotifications: ["prEditedNotification"],
+  // Extends the recommended configuration and adds custom GitHub Actions version management
+  extends: [
+    "config:recommended",
+    // For tool versions defined in GitHub Actions:
+    "customManagers:githubActionsVersions",
+  ],
+  // Adds the "internal" label to all PRs created by Renovate
+  labels: ["internal"],
+  // Schedules Renovate to run before 4am on Mondays
+  schedule: ["before 4am on Monday"],
+  // Disables semantic commit messages
+  semanticCommits: "disabled",
+  // Combines major and minor updates into a single PR
+  separateMajorMinor: false,
+  // Limits Renovate to creating no more than 10 PRs per hour
+  prHourlyLimit: 10,
+  // Specifies which package managers Renovate should use
+  enabledManagers: ["github-actions", "pre-commit", "cargo", "custom.regex"],
+  // Enables pre-commit hook updates
+  "pre-commit": {
+    enabled: true,
+  },
+  // Defines specific rules for package updates
+  packageRules: [
+    {
+      // Creates dedicated branches for updating dependency references in documentation
+      matchFileNames: ["docs/**/*.md"],
+      commitMessageTopic: "documentation references to {{{depName}}}",
+      semanticCommitType: "docs",
+      semanticCommitScope: null,
+      additionalBranchPrefix: "docs-",
+    },
+    {
+      // Groups updates for artifact-related GitHub Actions
+      groupName: "Artifact GitHub Actions dependencies",
+      matchManagers: ["github-actions"],
+      matchDatasources: ["gitea-tags", "github-tags"],
+      matchPackageNames: ["/actions/.*-artifact/"],
+      description: "Weekly update of artifact-related GitHub Actions dependencies",
+    },
+    {
+      // Disables updates for GitHub runners
+      groupName: "GitHub runners",
+      matchManagers: ["github-actions"],
+      matchDatasources: ["github-runners"],
+      description: "Disable PRs updating GitHub runners (e.g. 'runs-on: macos-14')",
+      enabled: false,
+    },
+    {
+      // Groups updates for pre-commit dependencies
+      groupName: "pre-commit dependencies",
+      matchManagers: ["pre-commit"],
+      description: "Weekly update of pre-commit dependencies",
+    },
+    {
+      // Disables updates for PyO3 dependencies
+      groupName: "pyo3",
+      matchManagers: ["cargo"],
+      matchPackageNames: ["/pyo3/"],
+      description: "Weekly update of pyo3 dependencies",
+      enabled: false,
+    },
+  ],
+  // Defines custom managers for updating specific patterns
+  customManagers: [
+    {
+      // Updates major GitHub actions references in documentation
+      customType: "regex",
+      fileMatch: ["^docs/.*\\.md$"],
+      matchStrings: [
+        "\\suses: (?<depName>[\\w-]+/[\\w-]+)(?<path>/.*)?@(?<currentValue>.+?)\\s",
+      ],
+      datasourceTemplate: "github-tags",
+      versioningTemplate: "regex:^v(?<major>\\d+)$",
+    },
+  ],
+  // Configuration for vulnerability alerts
+  vulnerabilityAlerts: {
+    commitMessageSuffix: "",
+    labels: ["internal", "security"],
+  },
+}

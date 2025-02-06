@@ -1,0 +1,99 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // SOURCE: https://github.com/langflow-ai/langflow/blob/99454a3d5d9574114b134070744d3155b8251320/.vscode/launch.json#L8
+            "name": "Debug Backend FastAPI",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                // Treat APP as an application factory, i.e. a () -> <ASGI app> callable.
+                "--factory",
+                "surfaces.API.server:app",
+                "--port",
+                "8080",
+                "--host",
+                "0.0.0.0",
+                "--reload",
+                "--log-level",
+                "debug",
+                "--loop",
+                "asyncio"
+            ],
+            // SOURCE: https://code.visualstudio.com/docs/python/debugging
+            // When set to true, activates debugging features specific to the Jinja templating framework.
+            "jinja": true,
+            // When omitted or set to true (the default), restricts debugging to user-written code only. Set to false to also enable debugging of standard library functions.
+            "justMyCode": false,
+            "env": {
+                "DYNAMODB_ENDPOINT_URL": "http://localdb:8000",
+                "ENVIRONMENT_NAME": "local",
+                "REGION_NAME": "local",
+                // FIXME: Do we break these out into a .env file so we can consume them?
+                // "AZURE_OPENAI_API_KEY": "$AZURE_OPENAI_API_KEY",
+                // "VISION_OPENAI_API_KEY": "$VISION_OPENAI_API_KEY",
+                // "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                // "SLACK_SIGNING_SECRET": "$SLACK_SIGNING_SECRET",
+                // "SLACK_APP_TOKEN": "$SLACK_APP_TOKEN",
+                "AWS_ACCESS_KEY_ID": "fake",
+                "AWS_SECRET_ACCESS_KEY": "fake",
+                "AWS_SESSION_TOKEN": "fake"
+            },
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "name": "Debug Slack Agent app.py",
+            "type": "python",
+            "request": "launch",
+            // "module": "python",
+            "program": "${workspaceFolder}/app/app.py",
+
+            "jinja": true,
+            "justMyCode": false,
+            "env": {
+                "DYNAMODB_ENDPOINT_URL": "http://localdb:8000",
+                "ENVIRONMENT_NAME": "local",
+                "REGION_NAME": "local",
+                // FIXME: Do we break these out into a .env file so we can consume them?
+                // "AZURE_OPENAI_API_KEY": "$AZURE_OPENAI_API_KEY",
+                // "VISION_OPENAI_API_KEY": "$VISION_OPENAI_API_KEY",
+                // "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                // "SLACK_SIGNING_SECRET": "$SLACK_SIGNING_SECRET",
+                // "SLACK_APP_TOKEN": "$SLACK_APP_TOKEN",
+                "AWS_ACCESS_KEY_ID": "fake",
+                "AWS_SECRET_ACCESS_KEY": "fake",
+                "AWS_SESSION_TOKEN": "fake"
+            },
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Debug Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "purpose": ["debug-test"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: pytest debugger",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["--verbose", "--showlocals", "--tb=short", "."],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

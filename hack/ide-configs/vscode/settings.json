@@ -1,0 +1,52 @@
+{
+    "editor.renderWhitespace": "all",
+    "pylint.args": [
+        "--enable=F,E,E1101",
+        "--disable=C0111,E0401,C,W",
+        "--max-line-length=120",
+        "--generated-members=torch.*, numpy.*"
+    ],
+    "python.analysis.extraPaths": ["./app"],
+    "python.analysis.completeFunctionParens": true,
+    "python.analysis.indexing": true,
+
+    "python.languageServer": "Pylance",
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.inlayHints.functionReturnTypes": true,
+
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportUnusedImport": "none",
+        "reportMissingImports": "error",
+        "reportImportCycles": "error",
+        "reportUnusedVariable": "none",
+        "reportMissingTypeStubs": "none",
+        "reportUnknownMemberType": "none",
+        "reportUnusedFunction": "warning",
+        "reportUnusedClass": "warning"
+    },
+    "[python]": {
+        "editor.tabSize": 4,
+        "editor.formatOnSave": false,
+        "editor.formatOnPaste": false,
+        "editor.formatOnType": false
+    },
+
+    "mypy-type-checker.args": [
+        "--show-column-numbers",
+        "--no-pretty",
+        "--config-file=${workspaceFolder}/app/pyproject.toml"
+    ],
+
+    "yaml.schemas": {
+        "https://json.schemastore.org/pre-commit-config.json": ".pre-commit-config.yaml"
+    },
+    "ruff.fixAll": false,
+    "ruff.path": ["ruff"],
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.interpreter": [
+        "/Users/malcolm/.pyenv/versions/ada-agent3/bin/python3"
+    ],
+    "ruff.lint.args": ["--config=app/pyproject.toml"]
+}

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# # Source environment variables if .env file exists
+# if [ -f .env ]; then
+#     source .env
+# fi
+
+# # Ensure the necessary directories exist
+# mkdir -p junit htmlcov cov_annotate
+
+# Run MonkeyType with pytest
+# uv run monkeytype run $(command -v pytest) \
+#     --verbose \
+#     --showlocals \
+#     --tb=short \
+#     --cov-append \
+#     --cov-report=term-missing \
+#     --junitxml=junit/test-results.xml \
+#     --cov-report=xml:cov.xml \
+#     --cov-report=html:htmlcov \
+#     --cov-report=annotate:cov_annotate \
+#     --cov=. \
+#     tests
+
+# uv run monkeytype run `which pytest`
+
+
+# List modules that MonkeyType has collected types for
+echo "Modules with collected types:"
+uv run monkeytype list-modules
+
+# Generate stubs for all modules
+echo "Generating stubs for all modules..."
+while IFS= read -r module; do
+    echo "Generating stub for $module"
+    # Create parent directory structure for the stub file
+    set -x
+    mkdir -p "$(dirname "stubs/${module//.//}.pyi")"
+    set +x
+    uv run monkeytype stub "$module" > "stubs/${module//.//}.pyi"
+done < <(uv run monkeytype list-modules)
+
+echo "MonkeyType run complete. Stubs have been generated in the 'stubs' directory."
+
+echo "applying stubs"
+uv run monkeytype list-modules | xargs -n1 uv run monkeytype apply --pep_563

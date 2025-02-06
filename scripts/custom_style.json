@@ -1,0 +1,12 @@
+{
+    "tags": {
+        "analysis": ["quotes", "info", "examples", "best_practices", "implementation"],
+        "custom_tags": ["architecture", "security", "performance"]
+    },
+    "preferences": {
+        "tone": "technical",
+        "detail_level": "high",
+        "include_examples": true,
+        "format_code": true
+    }
+}
