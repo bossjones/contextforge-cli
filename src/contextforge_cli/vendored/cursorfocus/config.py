@@ -1,9 +1,22 @@
 import json
 import os
+from typing import Any, Dict, Optional
 
 
-def load_config():
-    """Load configuration from config.json."""
+def load_config() -> dict[str, Any] | None:
+    """Load configuration settings from config.json file.
+
+    Attempts to load configuration from a config.json file in the same directory as this script.
+    If the file doesn't exist or there's an error loading it, returns the default configuration.
+
+    Returns:
+        Optional[Dict[str, Any]]: The loaded configuration dictionary if successful,
+            the default configuration if the file doesn't exist,
+            or None if there was an error loading the configuration.
+
+    Note:
+        Only processes .json files and falls back to default config for other file types.
+    """
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         config_path = os.path.join(script_dir, "config.json")
@@ -19,8 +32,19 @@ def load_config():
         return None
 
 
-def get_default_config():
-    """Get default configuration settings."""
+def get_default_config() -> dict[str, Any]:
+    """Get the default configuration settings.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing default configuration settings:
+            - project_path (str): Empty string by default
+            - update_interval (int): Default update interval in seconds
+            - max_depth (int): Maximum directory traversal depth
+            - ignored_directories (List[str]): List of directory names to ignore
+            - ignored_files (List[str]): List of file patterns to ignore
+            - binary_extensions (List[str]): List of binary file extensions
+            - file_length_standards (Dict[str, int]): Maximum line lengths by file extension
+    """
     return {
         "project_path": "",
         "update_interval": 60,
@@ -74,13 +98,13 @@ def get_default_config():
 
 
 # Load configuration once at module level
-_config = load_config()
+_config: dict[str, Any] | None = load_config()
 
 # Binary file extensions that should be ignored
-BINARY_EXTENSIONS = set(_config.get("binary_extensions", []))
+BINARY_EXTENSIONS: set[str] = set(_config.get("binary_extensions", []))
 
 # Documentation and text files that shouldn't be analyzed for functions
-NON_CODE_EXTENSIONS = {
+NON_CODE_EXTENSIONS: set[str] = {
     ".md",
     ".txt",
     ".log",
@@ -99,7 +123,7 @@ NON_CODE_EXTENSIONS = {
 }
 
 # Extensions that should be analyzed for code
-CODE_EXTENSIONS = {
+CODE_EXTENSIONS: set[str] = {
     ".py",  # Python
     ".js",  # JavaScript
     ".ts",  # TypeScript
@@ -116,7 +140,7 @@ CODE_EXTENSIONS = {
 }
 
 # Regex patterns for function detection
-FUNCTION_PATTERNS = {
+FUNCTION_PATTERNS: dict[str, str] = {
     # Python
     "python_function": r"def\s+([a-zA-Z_]\w*)\s*\(",
     "python_class": r"class\s+([a-zA-Z_]\w*)\s*[:\(]",
@@ -138,7 +162,7 @@ FUNCTION_PATTERNS = {
 }
 
 # Keywords that should not be treated as function names
-IGNORED_KEYWORDS = {
+IGNORED_KEYWORDS: set[str] = {
     "if",
     "switch",
     "while",
@@ -179,12 +203,21 @@ IGNORED_KEYWORDS = {
 }
 
 # Names of files and directories that should be ignored
-IGNORED_NAMES = set(_config.get("ignored_directories", []))
+IGNORED_NAMES: set[str] = set(_config.get("ignored_directories", []))
 
-FILE_LENGTH_STANDARDS = _config.get("file_length_standards", {})
+FILE_LENGTH_STANDARDS: dict[str, int] = _config.get("file_length_standards", {})
 
 
-def get_file_length_limit(file_path):
-    """Get the recommended line limit for a given file type."""
+def get_file_length_limit(file_path: str) -> int:
+    """Get the recommended maximum line limit for a given file type.
+
+    Args:
+        file_path: Path to the file to check.
+
+    Returns:
+        int: The recommended maximum number of lines for the file type.
+            Returns the extension-specific limit if defined,
+            otherwise returns the default limit (300 lines).
+    """
     ext = os.path.splitext(file_path)[1].lower()
     return FILE_LENGTH_STANDARDS.get(ext, FILE_LENGTH_STANDARDS.get("default", 300))

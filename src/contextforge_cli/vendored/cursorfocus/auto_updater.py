@@ -5,13 +5,20 @@ import shutil
 import tempfile
 import zipfile
 from datetime import UTC, datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, NoReturn, Optional
 
 import requests
 
 
-def clear_console():
-    """Clear console screen for different OS."""
+def clear_console() -> None:
+    """Clear the console screen based on the operating system.
+
+    This function uses the appropriate system command to clear the terminal screen
+    based on the operating system - 'cls' for Windows and 'clear' for Unix-based systems.
+
+    Returns:
+        None
+    """
     # For Windows
     if os.name == "nt":
         os.system("cls")
@@ -21,12 +28,46 @@ def clear_console():
 
 
 class AutoUpdater:
-    def __init__(self, repo_url: str = "https://github.com/RenjiYuusei/CursorFocus"):
-        self.repo_url = repo_url
-        self.api_url = repo_url.replace("github.com", "api.github.com/repos")
+    """A class to handle automatic updates from a GitHub repository.
+
+    This class provides functionality to check for updates, compare versions,
+    and download/install updates from a specified GitHub repository.
+
+    Attributes:
+        repo_url: The GitHub repository URL to check for updates.
+        api_url: The corresponding GitHub API URL for the repository.
+    """
+
+    def __init__(
+        self, repo_url: str = "https://github.com/RenjiYuusei/CursorFocus"
+    ) -> None:
+        """Initialize the AutoUpdater with a GitHub repository URL.
+
+        Args:
+            repo_url: The GitHub repository URL to check for updates.
+                     Defaults to "https://github.com/RenjiYuusei/CursorFocus".
+        """
+        self.repo_url: str = repo_url
+        self.api_url: str = repo_url.replace("github.com", "api.github.com/repos")
 
     def check_for_updates(self) -> dict[str, Any] | None:
-        """Check update from latest update"""
+        """Check for available updates from the GitHub repository.
+
+        This method compares the current commit SHA with the latest commit in the repository.
+        If an update is available, it returns information about the new version.
+
+        Returns:
+            Optional[Dict[str, Any]]: A dictionary containing update information if available:
+                - sha: The commit SHA
+                - message: The commit message
+                - date: Formatted date of the commit
+                - author: Name of the commit author
+                - download_url: URL to download the update
+                Returns None if no update is available or if an error occurs.
+
+        Note:
+            The method attempts to check both 'main' and 'master' branches if necessary.
+        """
         try:
             # Check commit latest
             response = requests.get(f"{self.api_url}/commits/main")
@@ -62,7 +103,14 @@ class AutoUpdater:
             return None
 
     def _get_current_commit(self) -> str:
-        """Get the SHA of the current commit."""
+        """Get the SHA of the current commit from the local file.
+
+        This method reads the commit SHA from a local file named '.current_commit'.
+        If the file doesn't exist or can't be read, returns an empty string.
+
+        Returns:
+            str: The current commit SHA if available, empty string otherwise.
+        """
         try:
             version_file = os.path.join(os.path.dirname(__file__), ".current_commit")
             if os.path.exists(version_file):
@@ -73,7 +121,27 @@ class AutoUpdater:
             return ""
 
     def update(self, update_info: dict[str, Any]) -> bool:
-        """Update from latest commit."""
+        """Update the application with the latest version from GitHub.
+
+        Downloads and installs the latest version of the application from the GitHub repository.
+        The update process includes:
+        1. Downloading the repository as a zip file
+        2. Extracting the contents
+        3. Copying new files to the installation directory
+        4. Updating the current commit SHA
+        5. Cleaning up temporary files
+
+        Args:
+            update_info: Dictionary containing update information:
+                - download_url: URL to download the update zip
+                - sha: The new commit SHA to save
+
+        Returns:
+            bool: True if update was successful, False otherwise.
+
+        Note:
+            The function will log any errors that occur during the update process.
+        """
         try:
             # Download zip file of branch
             response = requests.get(update_info["download_url"])
