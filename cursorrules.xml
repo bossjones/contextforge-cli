@@ -69,6 +69,409 @@
     <standard>Implement retry logic for API failures.</standard>
     <standard>Use streaming responses when appropriate.</standard>
     <standard>Properly handle API rate limits and quotas.</standard>
+
+    <langchain_examples>
+      <example name="chain_with_memory">
+        <![CDATA[
+        from typing import Dict, List, Optional, Any
+        from langchain_core.prompts import ChatPromptTemplate
+        from langchain_core.output_parsers import StrOutputParser
+        from langchain_openai import ChatOpenAI
+        from langchain_core.runnables import RunnableSequence
+        from langchain.memory import ConversationBufferMemory
+
+        async def create_chat_chain(
+            system_prompt: str,
+            memory: Optional[ConversationBufferMemory] = None
+        ) -> RunnableSequence:
+            """Create a chat chain with memory using LCEL.
+
+            Args:
+                system_prompt: The system prompt to guide the model's behavior
+                memory: Optional conversation memory to maintain context
+
+            Returns:
+                RunnableSequence: A configured chat chain
+            """
+            # Initialize the chat model
+            model = ChatOpenAI(
+                model_name="gpt-4-turbo-preview",
+                temperature=0.1
+            )
+
+            # Create the prompt template
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", system_prompt),
+                ("human", "{question}")
+            ])
+
+            # Create the chain using LCEL
+            chain = prompt | model | StrOutputParser()
+
+            if memory:
+                chain = chain.with_memory(memory)
+
+            return chain
+
+        async def invoke_chain(
+            chain: RunnableSequence,
+            question: str,
+            **kwargs: Any
+        ) -> str:
+            """Invoke the chat chain with proper error handling.
+
+            Args:
+                chain: The configured chat chain
+                question: User's question
+                **kwargs: Additional arguments for chain invocation
+
+            Returns:
+                str: Model's response
+
+            Raises:
+                Exception: If chain invocation fails
+            """
+            try:
+                response = await chain.ainvoke(
+                    {"question": question, **kwargs}
+                )
+                return response
+            except Exception as e:
+                logger.exception("Chain invocation failed", error=str(e))
+                raise
+      ]]>
+      </example>
+
+      <example name="streaming_response_handler">
+        <![CDATA[
+        from typing import AsyncGenerator, Dict
+        from langchain.callbacks.base import BaseCallbackHandler
+        from langchain.schema.messages import BaseMessage
+
+        class StreamingHandler(BaseCallbackHandler):
+            """Custom handler for streaming LLM responses.
+
+            This handler processes token-by-token streaming responses from the LLM
+            and yields them through an async generator.
+            """
+
+            def __init__(self) -> None:
+                self.tokens: List[str] = []
+
+            async def on_llm_new_token(self, token: str, **kwargs: Dict) -> None:
+                """Process each new token as it arrives.
+
+                Args:
+                    token: The new token from the LLM
+                    kwargs: Additional callback arguments
+                """
+                self.tokens.append(token)
+
+            async def get_tokens(self) -> AsyncGenerator[str, None]:
+                """Yield collected tokens as they arrive.
+
+                Yields:
+                    str: Individual tokens from the LLM response
+                """
+                for token in self.tokens:
+                    yield token
+        ]]>
+      </example>
+
+      <example name="retry_wrapper">
+        <![CDATA[
+        from typing import Any, Callable, TypeVar
+        import asyncio
+        from tenacity import (
+            retry,
+            stop_after_attempt,
+            wait_exponential,
+            retry_if_exception_type
+        )
+
+        T = TypeVar("T")
+
+        def create_retry_wrapper(
+            max_attempts: int = 3,
+            base_wait: float = 1.0
+        ) -> Callable[[Callable[..., T]], Callable[..., T]]:
+            """Create a retry decorator for LLM API calls.
+
+            Args:
+                max_attempts: Maximum number of retry attempts
+                base_wait: Base wait time for exponential backoff
+
+            Returns:
+                Callable: A retry decorator configured with the specified parameters
+            """
+            return retry(
+                stop=stop_after_attempt(max_attempts),
+                wait=wait_exponential(multiplier=base_wait),
+                retry=retry_if_exception_type(
+                    (
+                        TimeoutError,
+                        ConnectionError,
+                        asyncio.TimeoutError
+                    )
+                )
+            )
+        ]]>
+      </example>
+    </langchain_examples>
+
+    <langgraph_examples>
+      <example name="agent_workflow">
+        <![CDATA[
+        from typing import Dict, List, Tuple, TypedDict, Annotated, Sequence
+        from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+        from langchain_openai import ChatOpenAI
+        from langgraph.graph import StateGraph, END
+        from langchain.tools import BaseTool
+        from langchain_core.tools import tool
+
+        class AgentState(TypedDict):
+            """Type definition for agent state."""
+            messages: List[BaseMessage]
+            next_step: str
+            tools: List[BaseTool]
+            memory: Dict[str, Any]
+
+        @tool
+        def search_tool(query: str) -> str:
+            """Search for information.
+
+            Args:
+                query: Search query
+
+            Returns:
+                str: Search results
+            """
+            # Implement search logic
+            return f"Results for: {query}"
+
+        async def process_message(
+            state: AgentState,
+            llm: ChatOpenAI
+        ) -> AgentState:
+            """Process the latest message and decide next action.
+
+            Args:
+                state: Current agent state
+                llm: Language model
+
+            Returns:
+                Updated agent state
+            """
+            # Get the last message
+            last_message = state["messages"][-1]
+
+            # Generate response using the LLM
+            response = await llm.ainvoke(
+                [
+                    SystemMessage(content="You are a helpful assistant."),
+                    *state["messages"]
+                ]
+            )
+
+            # Update state
+            state["messages"].append(response)
+            state["next_step"] = "evaluate"
+
+            return state
+
+        async def create_agent_workflow(
+            tools: List[BaseTool]
+        ) -> StateGraph:
+            """Create a workflow graph for an AI agent system.
+
+            Args:
+                tools: List of tools available to the agent
+
+            Returns:
+                StateGraph: A configured workflow graph
+            """
+            # Initialize workflow
+            workflow = StateGraph(AgentState)
+
+            # Add nodes
+            workflow.add_node("process", process_message)
+            workflow.add_node("execute_tool", execute_tool)
+            workflow.add_node("evaluate", evaluate_result)
+
+            # Add edges with conditional routing
+            workflow.add_edge("process", "execute_tool")
+            workflow.add_edge("execute_tool", "evaluate")
+            workflow.add_edge("evaluate", "process")
+
+            # Add end condition
+            workflow.add_conditional_edges(
+                "evaluate",
+                should_end,
+                {
+                    True: END,
+                    False: "process"
+                }
+            )
+
+            return workflow.compile()
+
+        async def execute_tool(state: AgentState) -> AgentState:
+            """Execute the selected tool.
+
+            Args:
+                state: Current agent state
+
+            Returns:
+                Updated agent state
+            """
+            # Tool execution logic
+            tool_name = state["next_step"]
+            tool = next(t for t in state["tools"] if t.name == tool_name)
+            result = await tool.ainvoke(state["messages"][-1].content)
+
+            # Update state with tool result
+            state["messages"].append(
+                AIMessage(content=f"Tool {tool_name} result: {result}")
+            )
+            return state
+        ]]>
+      </example>
+
+      <example name="parallel_agents">
+        <![CDATA[
+        from typing import Dict, List, TypedDict, Any
+        from langchain_core.messages import BaseMessage, HumanMessage
+        from langgraph.graph import StateGraph
+        from operator import itemgetter
+        from langchain_core.runnables import RunnablePassthrough
+
+        class ParallelState(TypedDict):
+            """Type definition for parallel processing state."""
+            tasks: List[Dict[str, Any]]
+            results: List[Dict[str, Any]]
+            errors: List[Dict[str, str]]
+            memory: Dict[str, Any]
+
+        async def create_parallel_workflow(
+            num_agents: int = 3,
+            model: ChatOpenAI = None
+        ) -> StateGraph:
+            """Create a workflow for parallel agent processing.
+
+            Args:
+                num_agents: Number of parallel agents to use
+                model: Language model to use
+
+            Returns:
+                StateGraph: A configured parallel workflow
+            """
+            # Initialize workflow
+            workflow = StateGraph(ParallelState)
+
+            # Create agent nodes
+            for i in range(num_agents):
+                workflow.add_node(
+                    f"agent_{i}",
+                    create_agent_node(i, model)
+                )
+
+            # Add aggregator
+            workflow.add_node(
+                "aggregate",
+                aggregate_results
+            )
+
+            # Configure parallel execution
+            workflow.add_parallel_edges(
+                [f"agent_{i}" for i in range(num_agents)],
+                "aggregate"
+            )
+
+            # Add end condition
+            workflow.add_conditional_edges(
+                "aggregate",
+                should_end,
+                {
+                    True: END,
+                    False: "agent_0"  # Return to first agent if needed
+                }
+            )
+
+            return workflow.compile()
+
+        async def create_agent_node(
+            agent_id: int,
+            model: ChatOpenAI
+        ) -> Callable[[ParallelState], ParallelState]:
+            """Create an agent processing node.
+
+            Args:
+                agent_id: Agent identifier
+                model: Language model
+
+            Returns:
+                Agent processing function
+            """
+            async def agent_fn(state: ParallelState) -> ParallelState:
+                try:
+                    # Process assigned task
+                    task = state["tasks"][agent_id]
+                    response = await model.ainvoke([
+                        HumanMessage(content=task["input"])
+                    ])
+
+                    # Store result
+                    state["results"].append({
+                        "agent_id": agent_id,
+                        "task_id": task["id"],
+                        "result": response.content
+                    })
+                except Exception as e:
+                    # Handle errors
+                    state["errors"].append({
+                        "agent_id": agent_id,
+                        "error": str(e)
+                    })
+                return state
+
+            return agent_fn
+
+        async def aggregate_results(state: ParallelState) -> ParallelState:
+            """Aggregate results from parallel processing.
+
+            Args:
+                state: Current parallel processing state
+
+            Returns:
+                Updated state with aggregated results
+            """
+            # Combine results from all agents
+            combined_results = []
+            for result in state["results"]:
+                if not any(e["agent_id"] == result["agent_id"]
+                          for e in state["errors"]):
+                    combined_results.append(result)
+
+            # Update state
+            state["memory"]["last_results"] = combined_results
+            state["results"] = []  # Clear for next iteration
+            state["errors"] = []   # Clear errors
+
+            return state
+        ]]>
+      </example>
+    </langgraph_examples>
+
+    <best_practices>
+      <standard>Always implement proper error handling and retries for LLM calls.</standard>
+      <standard>Use streaming responses for better user experience with long-running operations.</standard>
+      <standard>Implement proper memory management for conversational contexts.</standard>
+      <standard>Structure complex workflows using LangGraph for better maintainability.</standard>
+      <standard>Use typed dictionaries and proper annotations for all agent states and functions.</standard>
+      <standard>Implement proper logging and monitoring for AI/ML operations.</standard>
+      <standard>Handle rate limits and quotas through configurable retry mechanisms.</standard>
+      <standard>Use async operations consistently throughout AI/ML integrations.</standard>
+    </best_practices>
   </ai_integration_standards>
 
   <code_quality>
