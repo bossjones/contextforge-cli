@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-
 from contextforge_cli.__version__ import __version__ as __version__
 
 

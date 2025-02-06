@@ -7,7 +7,6 @@ import logging
 
 from contextforge_cli.cli import main
 
-
 rootlogger = logging.getLogger()
 handler_logger = logging.getLogger("handler")
 

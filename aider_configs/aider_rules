@@ -5,7 +5,7 @@
 </purpose>
 
 <instructions>
-  <instruction>Create a main folder called `democracy_exe` to house all components.</instruction>
+  <instruction>Create a main folder called `contextforge_cli` to house all components.</instruction>
   <instruction>Divide the library into two main categories: `agents` and `tasks`.</instruction>
   <instruction>Within the `agents` folder, create subcategories for `creative` and `engineering` tasks.</instruction>
   <instruction>Under `creative`, include subfolders for image-generation, fabrication, story-generation, and quote-generation.</instruction>
@@ -18,7 +18,7 @@
 
 <python_standards>
   <project_structure>
-    <standard>Maintain clear project structure with separate directories for source code (`democracy_exe/`), tests (`tests/`), and documentation (`docs/`).</standard>
+    <standard>Maintain clear project structure with separate directories for source code (`contextforge_cli/`), tests (`tests/`), and documentation (`docs/`).</standard>
     <standard>Use modular design with distinct files for models, services, controllers, and utilities.</standard>
     <standard>Create separate files for AI components (chat models, prompts, output parsers, chat history, documents/loaders, stores, retrievers, tools)</standard>
     <standard>Follow modular design patterns for LangChain/LangGraph components</standard>
@@ -1039,7 +1039,7 @@
       <![CDATA[
       Example folder structure:
 democracy-exe/
-├── democracy_exe/                   # Main package directory
+├── contextforge_cli/                   # Main package directory
 │   ├── __init__.py
 │   ├── __main__.py
 │   ├── __version__.py
@@ -1396,7 +1396,7 @@ democracy-exe/
             verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show detailed version info")] = False,
         ) -> None:
             """Display version information."""
-            rich.print(f"democracy_exe version: {democracy_exe.__version__}")
+            rich.print(f"contextforge_cli version: {contextforge_cli.__version__}")
             if verbose:
                 rich.print(f"Python version: {sys.version}")
 
@@ -1487,7 +1487,7 @@ democracy-exe/
               intents.guilds = True
 
               # Create DemocracyBot with test configuration
-              from democracy_exe.chatbot.bot import DemocracyBot
+              from contextforge_cli.chatbot.bot import DemocracyBot
               bot = DemocracyBot(
                   command_prefix="?",
                   intents=intents,

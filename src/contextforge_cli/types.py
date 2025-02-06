@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pathlib
-
 from collections.abc import Callable, Coroutine, Mapping
 from collections.abc import Sequence as Seq
 from importlib import import_module
@@ -24,14 +23,12 @@ from typing import runtime_checkable as runtime_checkable
 
 import httpx
 import numpy as np
-
 from langchain_core.prompts.chat import (
     BaseChatPromptTemplate,
     BaseMessage,
     BaseMessagePromptTemplate,
 )
 from pydantic import BaseModel
-
 
 T = TypeVar("T")
 Coro = Coroutine[Any, Any, T]

@@ -21,7 +21,9 @@ dependencies = [
     "attrs>=25.1.0",
     "babel>=2.17.0",
     "beautifulsoup4>=4.13.3",
+    "bpython>=0.25",
     "codetiming>=1.4.0",
+    "dask>=2025.1.0",
     "fastapi[all]>=0.115.8",
     "files-to-prompt>=0.4",
     "grandalf>=0.8",
@@ -90,6 +92,7 @@ dependencies = [
     "symbex>=1.4",
     "tavily-python>=0.5.0",
     "toolong>=1.5.0",
+    "torchvision>=0.21.0",
     "trustcall>=0.0.34",
     "ttok>=0.3",
     "typing-extensions>=4.12.2",
@@ -156,14 +159,26 @@ select = [
   "I",  # isort
 ]
 ignore = [
-  "E501",
-  "B008",
-  "UP006",
-  "UP007",
-  # We actually do want to import from typing_extensions
-  "UP035",
-  # Relax the convention by _not_ requiring documentation for every function parameter.
-  "D417",
+  "B007",  # Loop control variable not used - acceptable in minimal examples
+  "B008", # function-call-in-default-argument Checks for function calls in default function arguments.
+  "B018",  # Useless expression - allowed for illustrative code snippets
+  "B034",  # Prefer `X | Y` over `Union` - disable for Python <3.10 compatibility
+  "B904",  # Require `raise...from` - relax for simple error demonstrations
+  "D417", # Relax the convention by _not_ requiring documentation for every function parameter.
+  "E402",  # Module import not at top - needed for notebook-style documentation
+  "E501", # Checks for lines that exceed the specified maximum character length.
+  "E721",  # Allow direct type comparison (`type(x) is int`) for clarity in examples
+  "E722",  # Permit bare except: for concise error handling demonstrations
+  "E731",  # Allow lambda assignment for short code samples
+  "E741",  # Allow ambiguous names (I/O/l) in compact examples
+  "F401",  # Allow unused imports in API documentation examples
+  "F811",  # Allow redefinition for independent code cells
+  "F821",  # Allow undefined names in partial code snippets
+  "F841",  # Allow unused variables in explanatory code fragments
+  "UP006", # Checks for the use of generics that can be replaced with standard library variants based on PEP 585.
+  "UP007", # non-pep604-annotation-union (UP007) Check for type annotations that can be rewritten based on PEP 604 syntax.
+  "UP035", # We actually do want to import from typing_extensions
+  "UP038",  # Accept `isinstance(X, (Y, Z))` for backwards compatibility
 ]
 pydocstyle = { convention = "google" }
 

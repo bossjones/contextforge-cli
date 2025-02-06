@@ -12,17 +12,14 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-
 from collections.abc import Callable
 from functools import partial, wraps
 from typing import Any, ParamSpec, TypeVar, cast
 
 import asyncer
-
 from typer import Typer
 from typer.core import TyperCommand, TyperGroup
 from typer.models import CommandFunctionType
-
 
 P = ParamSpec("P")
 R = TypeVar("R")

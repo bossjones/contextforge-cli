@@ -23,7 +23,6 @@ from __future__ import annotations
 import os
 import signal
 import sys
-
 from importlib import import_module
 from importlib.metadata import version as importlib_metadata_version
 from pathlib import Path
@@ -33,15 +32,12 @@ import asyncer
 import rich
 import structlog
 import typer
-
 from langchain.globals import set_debug, set_verbose
 from rich.console import Console
 
 import contextforge_cli
-
 from contextforge_cli.aio_settings import aiosettings
 from contextforge_cli.asynctyper import AsyncTyperImproved
-
 
 logger = structlog.get_logger(__name__)
 
@@ -78,7 +74,7 @@ def load_commands(directory: str = "subcommands") -> None:
     for filename in os.listdir(subcommands_dir):
         logger.debug(f"Filename: {filename}")
         if filename.endswith("_cmd.py"):
-            module_name = f'{__name__.split(".")[0]}.{directory}.{filename[:-3]}'
+            module_name = f"{__name__.split('.')[0]}.{directory}.{filename[:-3]}"
             logger.debug(f"Loading subcommand: {module_name}")
             module = import_module(module_name)
             if hasattr(module, "APP"):
@@ -109,7 +105,7 @@ async def aload_commands(directory: str = "subcommands") -> None:
         for filename in os.listdir(subcommands_dir):
             logger.debug(f"Filename: {filename}")
             if filename.endswith("_cmd.py"):
-                module_name = f'{__name__.split(".")[0]}.{directory}.{filename[:-3]}'
+                module_name = f"{__name__.split('.')[0]}.{directory}.{filename[:-3]}"
                 logger.debug(f"Loading subcommand: {module_name}")
 
                 async def _load_module(module_name: str, cmd_name: str) -> None:

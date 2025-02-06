@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from typing import Any
 
 import rich
@@ -35,7 +34,9 @@ def rich_inspect(obj) -> None:
 def dump_color(obj):
     # source: https://gist.github.com/EdwardBetts/0814484fdf7bbf808f6f
     from pygments import highlight
-    from pygments.formatters.terminal256 import Terminal256Formatter  # pylint: disable=no-name-in-module
+    from pygments.formatters.terminal256 import (
+        Terminal256Formatter,  # pylint: disable=no-name-in-module
+    )
 
     # Module name actually exists, but pygments loads things in a strange manner
     from pygments.lexers import Python3Lexer  # pylint: disable=no-name-in-module
@@ -73,7 +74,9 @@ def pprint_color(obj):
     from pprint import pformat
 
     from pygments import highlight
-    from pygments.formatters.terminal256 import Terminal256Formatter  # pylint: disable=no-name-in-module
+    from pygments.formatters.terminal256 import (
+        Terminal256Formatter,  # pylint: disable=no-name-in-module
+    )
 
     # Module name actually exists, but pygments loads things in a strange manner
     from pygments.lexers import PythonLexer  # pylint: disable=no-name-in-module

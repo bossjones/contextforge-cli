@@ -12,10 +12,8 @@ from __future__ import annotations
 
 import enum
 import pathlib
-
 from datetime import timedelta, timezone
 from typing import Any
-
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
