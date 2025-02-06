@@ -1334,3 +1334,15 @@ add-lint-comments-dry-run:
 add-lint-comments:
 	./scripts/add_lint_comments.py --dir contextforge_cli
 	./scripts/add_lint_comments.py --dir tests
+
+
+# Install the cursor update agent
+install-cursor-update:
+	mkdir -p ~/Library/LaunchAgents
+	cp  -a ./hack/com.bossjones.cursor-update.plist ~/Library/LaunchAgents/
+	launchctl load ~/Library/LaunchAgents/com.bossjones.cursor-update.plist
+
+# Uninstall the cursor update agent
+uninstall-cursor-update:
+	launchctl unload ~/Library/LaunchAgents/com.bossjones.cursor-update.plist
+	rm -v ~/Library/LaunchAgents/com.bossjones.cursor-update.plist

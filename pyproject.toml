@@ -102,6 +102,7 @@ dependencies = [
     "ttok>=0.3",
     "typing-extensions>=4.12.2",
     "uritools>=4.0.3",
+    "watchdog[watchmedo]>=6.0.0",
     "webcolors>=24.11.1",
 ]
 
