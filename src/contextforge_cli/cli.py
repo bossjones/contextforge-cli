@@ -67,19 +67,17 @@ def load_commands(directory: str = "subcommands") -> None:
     Returns:
         None
     """
-    script_dir = Path(__file__).parent
-    subcommands_dir = script_dir / directory
-
-    logger.debug(f"Loading subcommands from {subcommands_dir}")
+    subcommands_dir = Path(__file__).parent / directory
+    logger.debug("Loading subcommands from {}", subcommands_dir)
 
     for filename in os.listdir(subcommands_dir):
-        logger.debug(f"Filename: {filename}")
+        logger.debug("Filename: {}", filename)
         if filename.endswith("_cmd.py"):
-            module_name = f"{__name__.split('.')[0]}.{directory}.{filename[:-3]}"
-            logger.debug(f"Loading subcommand: {module_name}")
+            module_name = f"contextforge_cli.{directory}.{filename[:-3]}"
+            logger.debug("Loading subcommand: {}", module_name)
             module = import_module(module_name)
             if hasattr(module, "APP"):
-                logger.debug(f"Adding subcommand: {filename[:-7]}")
+                logger.debug("Adding subcommand: {}", filename[:-7])
                 APP.add_typer(module.APP, name=filename[:-7])
 
 

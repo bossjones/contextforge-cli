@@ -16,6 +16,7 @@ from typing import (
     NewType,
     Protocol,
     TypedDict,
+    TypeGuard,
     TypeVar,
     Union,
 )

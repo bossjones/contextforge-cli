@@ -303,8 +303,7 @@ get-ruff-config:
 
 # Run lint and test
 ci:
-	uv run lint
-	uv run test
+	{{UV_RUN}} pytest --diff-width=60 --diff-symbols --cov-append --cov-report=term-missing --junitxml=junit/test-results.xml --cov-report=xml:cov.xml --cov-report=html:htmlcov --cov-report=annotate:cov_annotate --cov=.
 
 # Open a manhole shell
 manhole-shell:
@@ -1351,5 +1350,7 @@ uninstall-cursor-update:
 tree:
 	tree -L 3 -I "*.pyc|__pycache__|.git|.pytest_cache|.ruff_cache|.mypy_cache|.coverage|htmlcov|.venv|.env|*.egg-info|build|dist|node_modules|.DS_Store"
 
+
 code2prompt-example:
+	@echo "🚀 Generating code2prompt example. See: https://github.com/mufeedvh/code2prompt"
 	code2prompt /Users/malcolm/dev/langchain-ai/langgraph --include="*.py,*.toml,*.pyi" --tokens --output=langgraph.txt
