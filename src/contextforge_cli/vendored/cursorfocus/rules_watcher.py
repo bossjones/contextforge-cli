@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, NotRequired, Optional, TypedDict, Union
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -137,6 +137,24 @@ class RulesWatcher(FileSystemEventHandler):
         )
 
 
+class ObserverDict(TypedDict, total=False):
+    """TypedDict for mapping project IDs to Observer instances.
+
+    Using total=False to allow for dynamic string keys.
+    """
+
+    project_id: NotRequired[Observer]  # type: ignore
+
+
+class WatcherDict(TypedDict, total=False):
+    """TypedDict for mapping project IDs to RulesWatcher instances.
+
+    Using total=False to allow for dynamic string keys.
+    """
+
+    project_id: NotRequired[RulesWatcher]
+
+
 class ProjectWatcherManager:
     """Manager for multiple project watchers.
 
@@ -150,7 +168,7 @@ class ProjectWatcherManager:
 
     def __init__(self) -> None:
         """Initialize the ProjectWatcherManager."""
-        self.observers: dict[str, Observer] = {}
+        self.observers: dict[str, Observer] = {}  # type: ignore
         self.watchers: dict[str, RulesWatcher] = {}
 
     def add_project(self, project_path: str, project_id: str | None = None) -> str:

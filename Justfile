@@ -1349,4 +1349,7 @@ uninstall-cursor-update:
 
 # print the directory tree of the project
 tree:
-    tree -L 3 -I "*.pyc|__pycache__|.git|.pytest_cache|.ruff_cache|.mypy_cache|.coverage|htmlcov|.venv|.env|*.egg-info|build|dist|node_modules|.DS_Store"
+	tree -L 3 -I "*.pyc|__pycache__|.git|.pytest_cache|.ruff_cache|.mypy_cache|.coverage|htmlcov|.venv|.env|*.egg-info|build|dist|node_modules|.DS_Store"
+
+code2prompt-example:
+	code2prompt /Users/malcolm/dev/langchain-ai/langgraph --include="*.py,*.toml,*.pyi" --tokens --output=langgraph.txt

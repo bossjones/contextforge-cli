@@ -3,7 +3,7 @@ import os
 import re
 import time
 from collections.abc import Callable
-from typing import Any, Dict, List, Optional, Set, TypedDict, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, TypedDict, Union
 
 from contextforge_cli.vendored.cursorfocus.config import load_config
 
@@ -327,7 +327,7 @@ PROJECT_TYPES: dict[str, ProjectTypeInfo] = {
 }
 
 # Add cache for scan results with expiration
-_scan_cache: dict[str, Tuple[float, list[dict[str, Any]]]] = {}
+_scan_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 CACHE_EXPIRATION: int = 300  # 5 minutes
 
 IGNORED_DIRECTORIES: set[str] = {
@@ -768,13 +768,34 @@ def scan_for_projects(
     return results
 
 
-def get_project_description(project_path):
-    """Get project description and key features using standardized approach."""
+def get_project_description(project_path: str) -> dict[str, str | list[str]]:
+    """Get project description and key features using standardized approach.
+
+    This function analyzes a project directory to generate a description and list of key features.
+    It uses project type detection and standard patterns to create a consistent description format.
+
+    Args:
+        project_path: Path to the project root directory
+
+    Returns:
+        dict[str, Union[str, list[str]]]: Dictionary containing:
+            - name (str): Project name derived from directory
+            - description (str): Project directory structure and information
+            - key_features (list[str]): List of key project features including:
+                - Project type description
+                - Primary language
+                - Framework information
+                - File and directory tracking
+                - Automatic updates
+
+    Raises:
+        Exception: If there's an error detecting project type or analyzing features
+    """
     try:
         project_info = detect_project_type(project_path)
         project_type = project_info["type"]
 
-        result = {
+        result: dict[str, str | list[str]] = {
             "name": os.path.basename(project_path),
             "description": "Project directory structure and information",
             "key_features": [

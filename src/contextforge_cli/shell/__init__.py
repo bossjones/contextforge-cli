@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 """contextforge_cli.shell module containing utility functions for running shell commands."""
+# pyright: reportUnusedFunction=false
+# pyright: reportUndefinedVariable=false
+# pyright: reportInvalidTypeForm=false
+# pyright: reportAttributeAccessIssue=false
 
 from __future__ import annotations
 
@@ -78,7 +82,7 @@ def _stat_y_file(fname: str, env: dict = None, cwd: str | None = None) -> str:
     return timestamp
 
 
-def _popen(cmd_arg: tuple, env: dict = None, cwd: str | None = None) -> bytes:
+def _popen(cmd_arg: tuple, env: dict = None, cwd: str | None = None) -> bytes:  # type: ignore
     """
     Run a command using subprocess.Popen and read the stdout output.
 

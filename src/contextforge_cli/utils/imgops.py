@@ -35,13 +35,13 @@ import structlog
 import torch
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as FT
-
-logger = structlog.get_logger(__name__)
+import webcolors
 from PIL import Image
 from scipy.spatial import KDTree
 from torchvision.utils import make_grid
 from tqdm.auto import tqdm
-from webcolors import CSS3_HEX_TO_NAMES, hex_to_rgb
+
+logger = structlog.get_logger(__name__)
 
 IMG_SIZE_CUTOFF = 1080
 
@@ -177,14 +177,14 @@ def normalize_rectangle_coords(
     xmin_fullsize, ymin_fullsize, xmax_fullsize, ymax_fullsize = bboxes[0]
 
     # if we have a negative point to make a rectange with, set it to 0
-    startY = max(int(ymin_fullsize), 0)
-    endY = max(int(ymax_fullsize), 0)
-    startX = max(int(xmin_fullsize), 0)
-    endX = max(int(xmax_fullsize), 0)
+    start_y = max(int(ymin_fullsize), 0)
+    end_y = max(int(ymax_fullsize), 0)
+    start_x = max(int(xmin_fullsize), 0)
+    end_x = max(int(xmax_fullsize), 0)
 
-    rich.print(startY, endY, startX, endX)
+    rich.print(start_y, end_y, start_x, end_x)
 
-    return [startY, endY, startX, endX]
+    return [start_y, end_y, start_x, end_x]
 
 
 def display_normalized_rectangle(image, out_bbox):
@@ -442,18 +442,38 @@ def resize_and_pillarbox(
 
 
 def convert_rgb_to_names(rgb_tuple: tuple[int, int, int]) -> str:
-    # a dictionary of all the hex and their respective names in css3
-    css3_db = CSS3_HEX_TO_NAMES
-    names = []
-    rgb_values = []
-    for color_hex, color_name in css3_db.items():
-        names.append(color_name)
-        rgb_values.append(hex_to_rgb(color_hex))
+    """
+    Convert RGB tuple to the closest CSS color name.
 
-    kdt_db = KDTree(rgb_values)
-    distance, index = kdt_db.query(rgb_tuple)
-    rich.print(f"closest match: {names[index]}")
-    return f"{names[index]}"
+    This function takes an RGB color tuple and finds the closest matching CSS color name.
+    It uses the webcolors library to perform the conversion.
+
+    Args:
+    ----
+        rgb_tuple (tuple[int, int, int]): The RGB color values as a tuple.
+
+    Returns:
+    -------
+        str: The name of the closest matching CSS color.
+    """
+    try:
+        # First try for an exact match
+        color_name = webcolors.rgb_to_name(rgb_tuple)
+        return color_name
+    except ValueError:
+        # If no exact match, find the closest color
+        min_colors = {}
+        for key, name in webcolors.CSS3_NAMES_TO_HEX.items():
+            rgb_values = webcolors.hex_to_rgb(name)
+            r_c, g_c, b_c = rgb_values
+            rd = (r_c - rgb_tuple[0]) ** 2
+            gd = (g_c - rgb_tuple[1]) ** 2
+            bd = (b_c - rgb_tuple[2]) ** 2
+            min_colors[(rd + gd + bd)] = key
+
+        closest_color = min_colors[min(min_colors.keys())]
+        rich.print(f"closest match: {closest_color}")
+        return closest_color
 
 
 def get_all_corners_color(urls: list[str]) -> dict[str, str]:
