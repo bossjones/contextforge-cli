@@ -57,37 +57,6 @@ async def download_image(url: str) -> BytesIO:
                 )
 
 
-async def file_to_data_uri(file: File) -> str:
-    """Convert a discord.File object to a data URI.
-
-    Args:
-        file (File): The discord.File object to convert.
-
-    Returns:
-        str: The data URI string representation of the file.
-    """
-    with BytesIO(file.fp.read()) as f:
-        file_bytes = f.read()
-    base64_encoded = base64.b64encode(file_bytes).decode("ascii")
-    return f"data:image;base64,{base64_encoded}"
-
-
-async def data_uri_to_file(data_uri: str, filename: str) -> File:
-    """Convert a data URI to a discord.File object.
-
-    Args:
-        data_uri (str): The data URI string to convert.
-        filename (str): The filename to use for the resulting File object.
-
-    Returns:
-        File: The converted discord.File object.
-    """
-    metadata, base64_data = data_uri.split(",")
-    content_type = metadata.split(";")[0].split(":")[1]
-    file_bytes = base64.b64decode(base64_data)
-    return File(BytesIO(file_bytes), filename=filename, spoiler=False)
-
-
 def file_to_local_data_dict(fname: str, dir_root: str) -> dict[str, Any]:
     """Convert a file to a dictionary with metadata.
 

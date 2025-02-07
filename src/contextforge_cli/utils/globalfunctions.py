@@ -28,6 +28,11 @@ from re import Pattern
 
 from PIL import Image
 
+# Regex patterns for markdown escaping
+_URL_REGEX = r"(?P<url>(?:https?://|steam://)[^\s<]+[^<.,:;\"\'\]\s])"
+_MARKDOWN_STOCK_REGEX = r"(?P<markdown>[_\\~|\*`]|^>(?:>>)?\s)"
+_MARKDOWN_ESCAPE_REGEX = re.compile(r"([_\\~|\*`])")
+
 
 def escape_markdown(
     text: str, *, as_needed: bool = False, ignore_links: bool = True
@@ -369,31 +374,6 @@ def seconds_to_time_stamp(seconds_init: int | float) -> str:
         return_string += f"{hours:02d}:"
     return_string += f"{minutes:02d}:{seconds:02d}"
     return return_string
-
-
-async def get_server_icon_color(guild: discord.Guild) -> str | int:
-    """
-    Get the guild icon color.
-
-    Args:
-        guild (discord.Guild): The guild to get the icon color from.
-
-    Returns:
-        Union[str, int]: The guild icon color as a hex string or integer.
-    """
-    "Get the guild icon, and color."
-    if not guild.icon:
-        return 0xFFFFFF
-    icon_bytes = await guild.icon.read()
-    icon_image = Image.open(BytesIO(icon_bytes))
-
-    # Resize the image to 1x1 and get the most visible average color
-    icon_image = icon_image.resize((1, 1))
-    icon_color = icon_image.getpixel((0, 0))
-
-    # Convert the color to hex format
-    hex_color = f"{icon_color[0]:02x}{icon_color[1]:02x}{icon_color[2]:02x}"
-    return int(hex_color, 16)
 
 
 def extract_timestamp(timestamp: str) -> datetime:

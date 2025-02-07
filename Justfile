@@ -452,19 +452,19 @@ uv_typecheck:
 uv_typecheck_pyright:
 	rm pyright.log || true
 	touch pyright.log
-	{{UV_RUN}} pyright --threads {{num_cpus()}} -p pyproject.toml contextforge_cli tests | tee -a pyright.log
+	{{UV_RUN}} pyright --threads {{num_cpus()}} -p pyproject.toml src tests | tee -a pyright.log
 	cat pyright.log
 
 typecheck-pydantic:
 	#!/bin/bash
-	grep -rl --exclude="*.pyc" --exclude="*requirements.txt" -e "pydantic" -e "pydantic_settings" contextforge_cli tests | {{UV_RUN}} pyright --verbose --threads {{num_cpus()}} -p pyproject.toml -
+	grep -rl --exclude="*.pyc" --exclude="*requirements.txt" -e "pydantic" -e "pydantic_settings" src tests | {{UV_RUN}} pyright --verbose --threads {{num_cpus()}} -p pyproject.toml -
 
 # Verify types using Pyright, ignoring external packages
 typecheck: uv_typecheck_pyright
 
 # Verify types using Pyright, ignoring external packages
 uv_typecheck_verify_types:
-	{{UV_RUN}} pyright --verifytypes contextforge_cli --ignoreexternal --verbose
+	{{UV_RUN}} pyright --verifytypes src --ignoreexternal --verbose
 
 # Run MyPy type checker and open coverage report
 uv_typecheck_mypy:

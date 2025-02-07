@@ -1,1 +1,1 @@
-"""Data models for the sandbox agent."""
+"""Data models for the contextforge cli."""

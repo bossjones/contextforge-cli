@@ -47,6 +47,7 @@ from typing import (
     List,
     NoReturn,
     Optional,
+    ParamSpec,
     Tuple,
     TypeVar,
     Union,
@@ -67,6 +68,13 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 
 _S = TypeVar("_S")
+
+# Type variables for maybe_coroutine
+P = ParamSpec("P")
+T = TypeVar("T")
+
+# Type alias for functions that may return an awaitable
+MaybeAwaitableFunc = Callable[P, Union[T, Awaitable[T]]]
 
 
 async def maybe_coroutine(
