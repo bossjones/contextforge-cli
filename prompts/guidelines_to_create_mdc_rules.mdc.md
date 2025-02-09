@@ -23,7 +23,12 @@ globs: ["**/*.mdc"]
         "pytest",
         "black",
         "isort"
-    ]
+    ],
+    "model_compatibility": {
+        "primary": "anthropic",
+        "models": ["claude-3-opus", "claude-3-sonnet", "claude-2.1"],
+        "markup": "xml_enhanced"
+    }
 }
 
 @structure {
@@ -855,5 +860,120 @@ build-backend = "hatchling.build"
         "configuration": "pyproject.toml",
         "lock": "uv.lock",
         "environment": ".venv"
+    }
+}
+
+## XML Tag Guidelines for Anthropic Models
+
+@anthropic_xml_guidelines {
+    "purpose": "Enhance MDC files with XML tags for better Anthropic model comprehension",
+    "tag_types": {
+        "context": {
+            "tag": "<context>",
+            "usage": "Provide context about the code or feature",
+            "example": "<context>This feature handles async data processing</context>"
+        },
+        "implementation": {
+            "tag": "<implementation>",
+            "usage": "Describe implementation details",
+            "example": "<implementation>Uses asyncio for concurrent operations</implementation>"
+        },
+        "requirements": {
+            "tag": "<requirements>",
+            "usage": "List technical requirements",
+            "example": "<requirements>Requires Python 3.8+ and aiohttp</requirements>"
+        },
+        "constraints": {
+            "tag": "<constraints>",
+            "usage": "Define implementation constraints",
+            "example": "<constraints>Must maintain memory usage below 100MB</constraints>"
+        },
+        "examples": {
+            "tag": "<examples>",
+            "usage": "Provide usage examples",
+            "example": "<examples>Example code demonstrating the feature</examples>"
+        }
+    },
+    "best_practices": [
+        "Use XML tags for critical information that models should focus on",
+        "Keep tags focused and concise",
+        "Use consistent tag naming",
+        "Nest tags logically when needed",
+        "Include type hints within implementation tags"
+    ],
+    "tag_structure": {
+        "nesting": "Allowed for logical grouping",
+        "attributes": "Use when additional metadata is needed",
+        "formatting": "Maintain clean indentation for nested tags"
+    }
+}
+
+@xml_examples {
+    "basic_usage": """
+<feature name="async_processor">
+    <context>
+        Handles asynchronous data processing with proper error handling and logging
+    </context>
+    <implementation>
+        <requirements>
+            Python 3.8+
+            aiohttp
+            structlog
+        </requirements>
+        <code_block language="python">
+            async def process_data(data: Dict[str, Any]) -> ProcessingResult:
+                try:
+                    result = await process_chunk(data)
+                    return ProcessingResult(success=True, data=result)
+                except Exception as e:
+                    logger.error("Processing failed", error=str(e))
+                    return ProcessingResult(success=False, error=str(e))
+        </code_block>
+    </implementation>
+</feature>
+    """,
+    "complex_example": """
+<module name="data_processor">
+    <context>
+        <description>Advanced data processing module with async capabilities</description>
+        <purpose>Handle large-scale data processing with proper error handling</purpose>
+    </context>
+    <requirements>
+        <dependencies>
+            <dependency name="aiohttp" version=">=3.8.0"/>
+            <dependency name="structlog" version=">=24.1.0"/>
+        </dependencies>
+        <python_version>>=3.8</python_version>
+    </requirements>
+    <implementation>
+        <classes>
+            <class name="DataProcessor">
+                <description>Main processor class with async capabilities</description>
+                <methods>
+                    <method name="process_chunk">
+                        <signature>async def process_chunk(self, data: Dict[str, Any]) -> ProcessingResult</signature>
+                        <description>Process a single chunk of data asynchronously</description>
+                    </method>
+                </methods>
+            </class>
+        </classes>
+    </implementation>
+</module>
+    """
+}
+
+@xml_validation {
+    "requirements": [
+        "All major features must include XML tags for context",
+        "Implementation details must be wrapped in appropriate tags",
+        "Code examples must include language specification",
+        "Requirements must be clearly tagged",
+        "Type hints must be included in implementation tags"
+    ],
+    "tag_rules": {
+        "nesting": "Maximum 3 levels deep",
+        "naming": "Use descriptive, lowercase names",
+        "attributes": "Use for metadata and specifications",
+        "content": "Keep content clear and focused"
     }
 }
