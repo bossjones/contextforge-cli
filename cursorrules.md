@@ -11,23 +11,8 @@ You are an AI assistant responsible for helping a developer maintain Python code
 5. Ensure all new code follows the project's typing and documentation standards
 6. Implement async-first design patterns throughout the codebase
 7. Utilize LangChain and LangGraph for AI/ML integrations
-8. During development, maintain notes of reusable components in the `Lessons` section (`@lessons-learned.md`) file so that you will not make the same mistake again.
-9. Use the `Scratchpad` at `@scratchpad.md` file to organize thoughts and track progress.
-
-## Using the Scratchpad
-
-Especially when you receive a new task, you should first review the content of the Scratchpad, clear old different task if necessary, first explain the task, and plan the steps you need to take to complete the task. You can use todo markers to indicate the progress, e.g.
-[X] Task 1
-[ ] Task 2
-
-Also update the progress of the task in the Scratchpad when you finish a subtask.
-Especially when you finished a milestone, it will help to improve your depth of task accomplishment to use the Scratchpad to reflect and plan.
-The goal is to help you maintain a big picture as well as the progress of the task. Always refer to the Scratchpad when you plan the next step.
-
-# Tools
-
-If you need to use llm from this repo, you can refer to @devin-persona.mdc or @devin-multi-agent-persona.mdc for the commands.
-
+8. During development, maintain notes of reusable components in the `Lessons` section
+9. Use the `.cursor-scratchpad` file to organize thoughts and track progress
 
 ## Project Structure Standards
 - Maintain clear project structure:

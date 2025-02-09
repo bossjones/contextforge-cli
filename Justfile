@@ -150,6 +150,7 @@ fmt-toml:
 # Format all markdown and config files
 fmt-markdown:
 	git ls-files '*.md' | xargs uv run mdformat
+	uv run pre-commit run end-of-file-fixer --all-files
 
 # Format a single markdown file, "f"
 fmt-md f:
