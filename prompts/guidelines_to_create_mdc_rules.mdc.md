@@ -47,7 +47,8 @@ globs: ["**/*.mdc"]
         "docstring_format",
         "async_patterns",
         "error_handling",
-        "testing_guidelines"
+        "testing_guidelines",
+        "dependency_management"
     ]
 }
 
@@ -724,3 +725,135 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+```
+
+## Dependency Management
+
+@dependency_management {
+    "package_manager": {
+        "tool": "uv",
+        "never_use": ["pip", "poetry", "pdm"],
+        "virtualenv": {
+            "location": ".venv",
+            "creation": "Automatically created by UV at project root"
+        },
+        "commands": {
+            "install": "uv pip install",
+            "sync": "uv sync",
+            "add": "uv pip install package_name",
+            "remove": "uv pip uninstall package_name",
+            "update": "uv pip install --upgrade package_name",
+            "list": "uv pip list",
+            "freeze": "uv pip freeze"
+        },
+        "best_practices": [
+            "Always use uv sync for dependency installation",
+            "Keep uv.lock in version control",
+            "Never modify .venv directory manually",
+            "Use pyproject.toml for package configuration",
+            "Maintain explicit version pins in requirements"
+        ]
+    },
+    "environment": {
+        "virtual_environment": {
+            "type": "venv",
+            "location": ".venv/",
+            "creation": "Automatic via UV",
+            "activation": "Not needed with UV commands"
+        },
+        "python_version": ">=3.8"
+    },
+    "dependency_files": {
+        "primary": {
+            "file": "pyproject.toml",
+            "purpose": "Project metadata and dependencies",
+            "format": "TOML",
+            "sections": [
+                "project",
+                "dependencies",
+                "dev-dependencies",
+                "build-system"
+            ]
+        },
+        "lock": {
+            "file": "uv.lock",
+            "purpose": "Locked dependencies with exact versions",
+            "management": "Automatically managed by UV",
+            "version_control": "Must be committed to repository"
+        }
+    }
+}
+
+@dependency_example {
+    "pyproject_example": {
+        "file": "pyproject.toml",
+        "content": """
+[project]
+name = "contextforge-cli"
+version = "0.1.0"
+description = "A powerful CLI tool for managing and enhancing AI context"
+requires-python = ">=3.8"
+dependencies = [
+    "langchain>=0.3.17",
+    "structlog>=24.4.0",
+    "pydantic>=2.5.0",
+    "aiofiles>=23.2.1"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.1",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.9",
+    "mypy>=1.8.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+"""
+    },
+    "commands": {
+        "setup": [
+            "# Initial setup",
+            "uv sync",
+            "# Install with dev dependencies",
+            "uv pip install -e '.[dev]'",
+            "# Update dependencies",
+            "uv sync"
+        ],
+        "daily_usage": [
+            "# Add new package",
+            "uv pip install new-package",
+            "# Sync dependencies",
+            "uv sync",
+            "# Run tests",
+            "uv run pytest"
+        ]
+    }
+}
+
+@dependency_validation {
+    "requirements": [
+        "Use UV exclusively for package management",
+        "Maintain pyproject.toml with explicit versions",
+        "Keep uv.lock in version control",
+        "Use .venv for virtual environment",
+        "Never modify virtual environment manually"
+    ],
+    "checks": [
+        "Verify UV installation",
+        "Check pyproject.toml format",
+        "Validate dependency specifications",
+        "Ensure uv.lock is present",
+        "Verify .venv location"
+    ],
+    "tools": {
+        "primary": "UV",
+        "configuration": "pyproject.toml",
+        "lock": "uv.lock",
+        "environment": ".venv"
+    }
+}
