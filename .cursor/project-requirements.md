@@ -39,6 +39,18 @@ ContextForge CLI is an async-first command-line tool focused on AI/ML integratio
    - Request correlation
    - Performance monitoring
 
+5. **Cursor Rules Migration**
+   - Intelligent parsing of .cursorrules and cursorrules.xml files
+   - Chain of Thought processing for content analysis
+   - Draft generation in prompts/drafts directory
+   - Iterative refinement process
+   - Safe migration to .cursor/rules/*.mdc
+   - Content validation and verification
+   - Comprehensive logging of migration process
+   - Rollback capabilities for failed migrations
+   - Support for incremental migrations
+   - Progress tracking and reporting
+
 ### Dependency Management
 - UV as primary dependency management tool
 - Lock file consistency with `uv.lock`
@@ -127,18 +139,50 @@ src/contextforge_cli/
 ├── __main__.py
 ├── __version__.py
 ├── bot_logger/          # Logging components
-├── models/             # Data models
+│   ├── __init__.py
+│   ├── formatters.py
+│   └── handlers.py
+├── models/             # Data models and schemas
+│   ├── __init__.py
+│   ├── base.py
+│   └── types.py
 ├── shell/             # Shell interaction components
+│   ├── __init__.py
+│   ├── commands.py
+│   └── processors.py
 ├── subcommands/       # CLI subcommand implementations
+│   ├── __init__.py
+│   ├── migrate_rules/
+│   │   ├── __init__.py
+│   │   ├── parser.py
+│   │   └── validator.py
+│   └── base.py
 ├── utils/             # Utility functions and helpers
+│   ├── __init__.py
+│   ├── async_helpers.py
+│   └── file_ops.py
 ├── vendored/          # Vendored dependencies
+│   └── __init__.py
 └── cli.py            # Main CLI entry point
 
 tests/
 ├── __init__.py
-├── conftest.py       # Shared fixtures
+├── conftest.py       # Shared test fixtures
 ├── unittests/        # Unit tests
+│   ├── __init__.py
+│   └── utils/
 └── integration/      # Integration tests
+    └── __init__.py
+
+docs/
+├── architecture/     # Architecture documentation
+├── api/             # API documentation
+├── examples/        # Usage examples
+└── phases/          # Phase completion docs
+
+.cursor/
+├── rules/           # MDC rule files
+└── memories/        # Memory system files
 ```
 
 ## Development Workflow
@@ -350,51 +394,223 @@ async def create_agent_workflow(tools: List[BaseTool]) -> StateGraph:
     return workflow.compile()
 ```
 
+## Project Roadmap (Updated Implementation Sequence)
+
+### Phase 1: Core Framework and Basic Functionality
+
+1. Implement Cursor Rules Migration System
+   - [ ] Design Chain of Thought processing system for rule analysis
+   - [ ] Create parser for .cursorrules and cursorrules.xml files
+   - [ ] Implement draft generation in prompts/drafts directory
+   - [ ] Develop iterative refinement workflow
+   - [ ] Build safe migration system to .cursor/rules/*.mdc
+   - [ ] Implement validation and verification
+   - [ ] Add comprehensive logging
+   - [ ] Create rollback mechanism
+   - [ ] Support incremental migrations
+   - [ ] Add progress tracking and reporting
+
+2. Set up project structure
+   - [ ] Initialize Git repository
+   - [ ] Create virtual environment
+   - [ ] Set up project dependencies (Typer, yt-dlp, etc.)
+
+3. Implement basic CLI structure using Typer
+   - [ ] Create main CLI entry point
+   - [ ] Implement basic error handling and logging
+
+4. Develop template generation feature
+   - [ ] Create command to generate .cursor/rules/*.mdc files from a template
+   - [ ] Implement file reading and writing functionality
+   - [ ] Add error handling for file operations
+
+5. Implement LLM integration for feature planning
+   - [ ] Set up LLM API connection (e.g., OpenAI GPT)
+   - [ ] Create command to generate detailed story list for a given feature
+   - [ ] Implement prompt engineering for effective LLM interaction
+
+### Phase 2: YouTube Integration and Subtitle Processing
+
+6. Integrate yt-dlp for YouTube video processing
+   - [ ] Implement YouTube video URL parsing
+   - [ ] Create command to download subtitles using yt-dlp
+
+7. Develop subtitle summarization feature
+   - [ ] Implement text processing for subtitle content
+   - [ ] Create summarization algorithm or integrate with LLM for summarization
+   - [ ] Implement highlighting of important concepts
+
+### Phase 3: Advanced Context Management
+
+8. Implement dual-mode operation system (Plan/Act)
+   - [ ] Design and implement Plan mode functionality
+   - [ ] Design and implement Act mode functionality
+   - [ ] Create seamless switching between modes
+
+9. Develop confidence scoring system
+   - [ ] Design confidence scoring algorithm
+   - [ ] Integrate confidence scoring into Plan/Act modes
+   - [ ] Implement feedback loop for improving confidence scores
+
+### Phase 4: Memory Systems and Documentation
+
+10. Implement advanced memory systems
+    - [ ] Design and implement short-term memory functionality
+    - [ ] Design and implement long-term memory functionality
+    - [ ] Create memory management commands
+
+11. Develop automated documentation capabilities
+    - [ ] Implement code analysis for documentation generation
+    - [ ] Create command to generate project documentation
+    - [ ] Implement documentation update functionality
+
+### Phase 5: Integration and Polish
+
+12. Integrate all components into a cohesive system
+    - [ ] Ensure smooth interaction between all features
+    - [ ] Implement comprehensive error handling and logging
+
+13. Develop user configuration system
+    - [ ] Create configuration file structure
+    - [ ] Implement command to manage user preferences
+
+14. Create comprehensive test suite
+    - [ ] Implement unit tests for all major components
+    - [ ] Create integration tests for end-to-end functionality
+
+15. Polish user experience
+    - [ ] Refine CLI interface and command structure
+    - [ ] Implement progress bars and rich console output
+    - [ ] Create detailed help documentation for all commands
+
+### Phase 6: Expansion and Advanced Features
+
+16. Implement plugin system for extensibility
+    - [ ] Design plugin architecture
+    - [ ] Create sample plugins to demonstrate functionality
+
+17. Develop AI context enhancement features
+    - [ ] Implement advanced context analysis
+    - [ ] Create commands for context manipulation and optimization
+
+18. Integrate with version control systems
+    - [ ] Implement Git integration for context tracking
+    - [ ] Create commands for managing context across branches
+
 ## Architecture Guidelines
 
 ### 1. Modular Structure
 ```
-src/
-├── app/               # Next.js app router
-├── components/        # Reusable UI components
-│   ├── core/          # Base components (buttons, inputs)
-│   ├── accounting/    # Domain-specific components
-│   └── shared/       # Cross-feature components
-├── lib/
-│   ├── api/           # API clients
-│   ├── hooks/         # Custom hooks
-│   ├── utils/         # Helper functions
-│   └── validation/    # Zod schemas
-├── types/             # Global TS types
+src/contextforge_cli/
+├── __init__.py
+├── __main__.py
+├── __version__.py
+├── bot_logger/          # Logging components
+│   ├── __init__.py
+│   ├── formatters.py
+│   └── handlers.py
+├── models/             # Data models and schemas
+│   ├── __init__.py
+│   ├── base.py
+│   └── types.py
+├── shell/             # Shell interaction components
+│   ├── __init__.py
+│   ├── commands.py
+│   └── processors.py
+├── subcommands/       # CLI subcommand implementations
+│   ├── __init__.py
+│   ├── migrate_rules/
+│   │   ├── __init__.py
+│   │   ├── parser.py
+│   │   └── validator.py
+│   └── base.py
+├── utils/             # Utility functions and helpers
+│   ├── __init__.py
+│   ├── async_helpers.py
+│   └── file_ops.py
+├── vendored/          # Vendored dependencies
+│   └── __init__.py
+└── cli.py            # Main CLI entry point
+
+tests/
+├── __init__.py
+├── conftest.py       # Shared test fixtures
+├── unittests/        # Unit tests
+│   ├── __init__.py
+│   └── utils/
+└── integration/      # Integration tests
+    └── __init__.py
+
+docs/
+├── architecture/     # Architecture documentation
+├── api/             # API documentation
+├── examples/        # Usage examples
+└── phases/          # Phase completion docs
+
+.cursor/
+├── rules/           # MDC rule files
+└── memories/        # Memory system files
 ```
 
-### 2. Server/Client Separation
-- **Server Components**: Default to server components for:
-  - Data fetching
-  - Sensitive operations
-  - Static content
-- **Client Components**: Only use when needed for:
-  - Interactivity
-  - Browser APIs
-  - State management
+### 2. Component Organization
 
-### 3. Reusable Components
-1. Create atomic components with:
-   - PropTypes using TypeScript interfaces
-   - Storybook stories for documentation
-   - Accessibility attributes by default
-2. Follow naming convention:
-   - `FeatureComponentName.tsx` (e.g. `DepreciationCalculator.tsx`)
-   - `CoreComponentName.tsx` (e.g. `FormInput.tsx`)
+1. **Core Components**
+   - `bot_logger/`: Structured logging with contextual tracking
+   - `models/`: Pydantic models and type definitions
+   - `shell/`: Async shell interaction handlers
+   - `subcommands/`: CLI command implementations
+   - `utils/`: Shared utility functions
 
-### 4. API Design Rules
-- Versioned endpoints: `/api/v1/...`
-- RESTful structure for resources
-- Error format standardization:
-  ```ts
-  interface APIError {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  }
-  ```
+2. **Testing Structure**
+   - Mirror source directory structure in tests
+   - Separate unit and integration tests
+   - Shared fixtures in conftest.py
+   - VCR.py cassettes for HTTP tests
+
+3. **Documentation Organization**
+   - Architecture docs in docs/architecture/
+   - API documentation with examples
+   - Phase completion records
+   - MDC rules in .cursor/rules/
+
+### 3. Design Patterns
+
+1. **Async Patterns**
+   - Consistent use of async/await
+   - Proper context managers
+   - Efficient async file operations
+   - Cancellation handling
+
+2. **AI/ML Integration**
+   - LangChain workflows
+   - LangGraph agent systems
+   - Streaming response handling
+   - Rate limit management
+
+3. **Error Handling**
+   - Custom exception hierarchies
+   - Contextual error messages
+   - Proper recovery strategies
+   - Error boundaries
+
+### 4. File Standards
+
+1. **Python Files**
+   - Future imports at top
+   - Organized import sections
+   - Google-style docstrings
+   - Type annotations
+   - Proper error handling
+
+2. **MDC Files**
+   - Clear frontmatter
+   - Proper metadata annotations
+   - Structured content sections
+   - Implementation examples
+
+3. **Documentation Files**
+   - Clear hierarchical structure
+   - Practical examples
+   - Type information
+   - Error cases
+   - Usage patterns
