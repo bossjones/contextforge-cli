@@ -742,10 +742,12 @@ dependencies = [
     { name = "bpython" },
     { name = "codetiming" },
     { name = "dask" },
+    { name = "duckduckgo-search" },
     { name = "fastapi", extra = ["all"] },
     { name = "files-to-prompt" },
     { name = "gitignore-parser" },
     { name = "grandalf" },
+    { name = "httpx" },
     { name = "imageio" },
     { name = "imutils" },
     { name = "langchain" },
@@ -780,11 +782,12 @@ dependencies = [
     { name = "marimo" },
     { name = "markdown" },
     { name = "matplotlib" },
-    { name = "mcp" },
+    { name = "mcp", extra = ["cli"] },
     { name = "md2pdf" },
     { name = "msgspec" },
     { name = "pandas" },
     { name = "pdf2image" },
+    { name = "playwright" },
     { name = "psutil" },
     { name = "pyarrow" },
     { name = "pydantic", extra = ["email"] },
@@ -881,10 +884,12 @@ requires-dist = [
     { name = "bpython", specifier = ">=0.25" },
     { name = "codetiming", specifier = ">=1.4.0" },
     { name = "dask", specifier = ">=2025.1.0" },
+    { name = "duckduckgo-search", specifier = ">=7.3.2" },
     { name = "fastapi", extras = ["all"], specifier = ">=0.115.8" },
     { name = "files-to-prompt", specifier = ">=0.4" },
     { name = "gitignore-parser", specifier = ">=0.1.11" },
     { name = "grandalf", specifier = ">=0.8" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "imageio", specifier = ">=2.37.0" },
     { name = "imutils", specifier = ">=0.5.4" },
     { name = "langchain", specifier = ">=0.3.17" },
@@ -919,11 +924,12 @@ requires-dist = [
     { name = "marimo", specifier = ">=0.11.0" },
     { name = "markdown", specifier = ">=3.7" },
     { name = "matplotlib", specifier = ">=3.10.0" },
-    { name = "mcp", specifier = ">=1.2.1" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.2.1" },
     { name = "md2pdf", specifier = ">=1.0.1" },
     { name = "msgspec", specifier = ">=0.19.0" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "pdf2image", specifier = ">=1.17.0" },
+    { name = "playwright", specifier = ">=1.50.0" },
     { name = "psutil", specifier = ">=6.1.1" },
     { name = "pyarrow", specifier = ">=19.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.10.6" },
@@ -1277,6 +1283,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ae/ed/aefcc8cd0ba62a0560c3c18c33925362d46c6075480bfa4df87b28e169a9/docutils-0.21.2.tar.gz", hash = "sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f", size = 2204444 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/d7/9322c609343d929e75e7e5e6255e614fcc67572cfd083959cdef3b7aad79/docutils-0.21.2-py3-none-any.whl", hash = "sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2", size = 587408 },
+]
+
+[[package]]
+name = "duckduckgo-search"
+version = "7.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "lxml" },
+    { name = "primp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d7/10/b70410e2282d6d2ef33bb0ee59183a1171932584212a529e9f4df2b38586/duckduckgo_search-7.3.2.tar.gz", hash = "sha256:bfaffad8da476deeaf10e1016691eaa724debea80b6198d63c877f2f236f8018", size = 24214 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/3d/ff57423bc7fc2c6e1f3fe6205cd08b6ffecb8b293af950d221a9e522b2f9/duckduckgo_search-7.3.2-py3-none-any.whl", hash = "sha256:7133579414ac0395351fc448bb2d31546edd66a1487e39091eee4ef908fa1b81", size = 19917 },
 ]
 
 [[package]]
@@ -2951,6 +2971,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4c/0d/6770742a84c8aa1d36c0d628896a380584c5759612e66af7446af07d8775/mcp-1.2.1-py3-none-any.whl", hash = "sha256:579bf9c9157850ebb1344f3ca6f7a3021b0123c44c9f089ef577a7062522f0fd", size = 66453 },
 ]
 
+[package.optional-dependencies]
+cli = [
+    { name = "python-dotenv" },
+    { name = "typer" },
+]
+
 [[package]]
 name = "md2pdf"
 version = "1.0.1"
@@ -3748,6 +3774,24 @@ wheels = [
 ]
 
 [[package]]
+name = "playwright"
+version = "1.50.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "greenlet" },
+    { name = "pyee" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0d/5e/068dea3c96e9c09929b45c92cf7e573403b52a89aa463f89b9da9b87b7a4/playwright-1.50.0-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:f36d754a6c5bd9bf7f14e8f57a2aea6fd08f39ca4c8476481b9c83e299531148", size = 40277564 },
+    { url = "https://files.pythonhosted.org/packages/78/85/b3deb3d2add00d2a6ee74bf6f57ccefb30efc400fd1b7b330ba9a3626330/playwright-1.50.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:40f274384591dfd27f2b014596250b2250c843ed1f7f4ef5d2960ecb91b4961e", size = 39521844 },
+    { url = "https://files.pythonhosted.org/packages/f3/f6/002b3d98df9c84296fea84f070dc0d87c2270b37f423cf076a913370d162/playwright-1.50.0-py3-none-macosx_11_0_universal2.whl", hash = "sha256:9922ef9bcd316995f01e220acffd2d37a463b4ad10fd73e388add03841dfa230", size = 40277563 },
+    { url = "https://files.pythonhosted.org/packages/b9/63/c9a73736e434df894e484278dddc0bf154312ff8d0f16d516edb790a7d42/playwright-1.50.0-py3-none-manylinux1_x86_64.whl", hash = "sha256:8fc628c492d12b13d1f347137b2ac6c04f98197ff0985ef0403a9a9ee0d39131", size = 45076712 },
+    { url = "https://files.pythonhosted.org/packages/bd/2c/a54b5a64cc7d1a62f2d944c5977fb3c88e74d76f5cdc7966e717426bce66/playwright-1.50.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ffcff35f72db2689a79007aee78f1b0621a22e6e3d6c1f58aaa9ac805bf4497c", size = 44493111 },
+    { url = "https://files.pythonhosted.org/packages/2b/4a/047cbb2ffe1249bd7a56441fc3366fb4a8a1f44bc36a9061d10edfda2c86/playwright-1.50.0-py3-none-win32.whl", hash = "sha256:3b906f4d351260016a8c5cc1e003bb341651ae682f62213b50168ed581c7558a", size = 34784543 },
+    { url = "https://files.pythonhosted.org/packages/bc/2b/e944e10c9b18e77e43d3bb4d6faa323f6cc27597db37b75bc3fd796adfd5/playwright-1.50.0-py3-none-win_amd64.whl", hash = "sha256:1859423da82de631704d5e3d88602d755462b0906824c1debe140979397d2e8d", size = 34784546 },
+]
+
+[[package]]
 name = "pluggy"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3795,6 +3839,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/2a/13/b62d075317d8686071eb843f0bb1f195eb332f48869d3c31a4c6f1e063ac/pre_commit-4.1.0.tar.gz", hash = "sha256:ae3f018575a588e30dfddfab9a05448bfbd6b73d78709617b5a2b853549716d4", size = 193330 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/43/b3/df14c580d82b9627d173ceea305ba898dca135feb360b6d84019d0803d3b/pre_commit-4.1.0-py2.py3-none-any.whl", hash = "sha256:d29e7cb346295bcc1cc75fc3e92e343495e3ea0196c9ec6ba53f49f10ab6ae7b", size = 220560 },
+]
+
+[[package]]
+name = "primp"
+version = "0.12.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/a6/330061fcf3f4dbcebd01ad7fe4eaf45fddbec50fd9f2d471d8acc3f1d109/primp-0.12.0.tar.gz", hash = "sha256:94295f912ab5831f08d1c2f7ce41037e4b501adb53b7976c849201b5d45f719d", size = 90564 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/86/12/fd5915d246ddc6cb56f501e844bf16c394e12d95c13661bedbc51bd593c1/primp-0.12.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:268c41e1e5100666b6c09f62d14a8e3f43907f70e5699b8c94bc78e212dfe42a", size = 3156840 },
+    { url = "https://files.pythonhosted.org/packages/f9/9e/ecab34d248f5187237b68254d5fd98c134e96228c51efadd79f7bbb0b4d1/primp-0.12.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:406fb7705dcd17c03521982d9108bf02709ae775b712ea68cb7f92fbe5b258dc", size = 2930238 },
+    { url = "https://files.pythonhosted.org/packages/97/99/cee75de2a56cafce73450e66b8314c4cfd9b25c2049d46619cf58cc6518e/primp-0.12.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:eb30bd79390ba9b1521e86a0b150867a8cd05944a2d8c35e70cffd15260a0ff0", size = 3252530 },
+    { url = "https://files.pythonhosted.org/packages/02/4c/b249f28f5102ed78f3c1f99966431330d58fa8b403613ebd5fcc0097b7bc/primp-0.12.0-cp38-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:1fd20ac8f8cba0f3f6207a1bb95b067e7ae8588e4c0acaaa7130cd69736afdd3", size = 3226946 },
+    { url = "https://files.pythonhosted.org/packages/f5/af/cfedb9ce271e382e08150b2acc491ad8cc7b97d568297f7ddb89240ac229/primp-0.12.0-cp38-abi3-manylinux_2_34_armv7l.whl", hash = "sha256:6b89fb7872a501cf9116248763dda194810262261f5d041053d55be57fe94172", size = 2987975 },
+    { url = "https://files.pythonhosted.org/packages/ed/9e/f9522bb18872761074cdadc3a55c6524a7c319de705f1ed1298ab7f923fb/primp-0.12.0-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:82bb369b4f4d49fec394173ccadcfe1920b8459c34d8a32cb79c24fc2def22dc", size = 3385465 },
+    { url = "https://files.pythonhosted.org/packages/b6/a5/c67e4116eca1183f3534d479a9af982a8e6a7f8115a9f6409fa2599b8615/primp-0.12.0-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:abe0436fc11c2ec2508eb199178f1c811dffa370940f817543b3b5aa36461db2", size = 3572429 },
+    { url = "https://files.pythonhosted.org/packages/1b/7c/bed5d60edacc98c029c4934d6e839d718b123effb966b7e960b5d7d172e1/primp-0.12.0-cp38-abi3-win_amd64.whl", hash = "sha256:f65687b25bdeb3c8c28d043667e8d3378e1e8069167f1e50d619986bfbcec25b", size = 3117184 },
 ]
 
 [[package]]
@@ -4110,6 +4170,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/2e/c2/97fc6ce4ce0045080dc99446def812081b57750ed8aa67bfdfafa4561fe5/pydyf-0.11.0.tar.gz", hash = "sha256:394dddf619cca9d0c55715e3c55ea121a9bf9cbc780cdc1201a2427917b86b64", size = 17769 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c9/ac/d5db977deaf28c6ecbc61bbca269eb3e8f0b3a1f55c8549e5333e606e005/pydyf-0.11.0-py3-none-any.whl", hash = "sha256:0aaf9e2ebbe786ec7a78ec3fbffa4cdcecde53fd6f563221d53c6bc1328848a3", size = 8104 },
+]
+
+[[package]]
+name = "pyee"
+version = "12.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0a/37/8fb6e653597b2b67ef552ed49b438d5398ba3b85a9453f8ada0fd77d455c/pyee-12.1.1.tar.gz", hash = "sha256:bbc33c09e2ff827f74191e3e5bbc6be7da02f627b7ec30d86f5ce1a6fb2424a3", size = 30915 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/25/68/7e150cba9eeffdeb3c5cecdb6896d70c8edd46ce41c0491e12fb2b2256ff/pyee-12.1.1-py3-none-any.whl", hash = "sha256:18a19c650556bb6b32b406d7f017c8f513aceed1ef7ca618fb65de7bd2d347ef", size = 15527 },
 ]
 
 [[package]]

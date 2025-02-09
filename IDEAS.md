@@ -1,0 +1,2 @@
+- Add a typer command to initalize a MCP server repo in python using https://github.com/jlowin/fastmcp. It should be templated using copier https://copier.readthedocs.io/en/stable/. It should take aguments for the server name. uv will be used to install the dependencies.
+- experiment with https://github.com/T1nker-1220/NEW-PROJECT-RULES-ULTRA-CONTEXT-FOR-AI-MEMORIES-LESSONS-SCRATCHPAD-WITH-PLAN-AND-ACT-MODES

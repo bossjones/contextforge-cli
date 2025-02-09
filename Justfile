@@ -1354,3 +1354,6 @@ tree:
 code2prompt-example:
 	@echo "🚀 Generating code2prompt example. See: https://github.com/mufeedvh/code2prompt"
 	code2prompt /Users/malcolm/dev/langchain-ai/langgraph --include="*.py,*.toml,*.pyi" --tokens --output=langgraph.txt
+
+open-claude-config:
+	cursor ~/Library/Application\ Support/Claude/claude_desktop_config.json
