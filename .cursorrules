@@ -3132,3 +3132,103 @@ democracy-exe/
                   assert any(
                       log.get("event").startswith("File created at:") for log in captured
                   ), "Expected file creation message not found in logs"
+
+                  # For messages containing variable paths or IDs, use partial matching
+                  assert any(
+                      "user_123" in log.get("event") for log in captured
+                  ), "Expected user ID in log message not found"
+
+                  # Check log context values
+                  assert any(
+                      log.get("user_id") == "123" for log in captured
+                  ), "Expected user_id in log context not found"
+
+                  # Verify error logging
+                  assert not any(
+                      log.get("level") == "error" for log in captured
+                  ), "Unexpected error logs found"
+          ]]>
+        </example>
+
+        <best_practices>
+          <standard>Always use structlog's testing.capture_logs for log verification</standard>
+          <standard>Check both log events and context data in assertions</standard>
+          <standard>Use descriptive assertion messages</standard>
+          <standard>Group related log checks within the same capture_logs context</standard>
+          <standard>Clean up any test-specific logging configuration after tests</standard>
+          <standard>Test both success and error logging paths</standard>
+          <standard>Verify log levels are appropriate for different scenarios</standard>
+        </best_practices>
+
+        <error_logging>
+          <standard>Test error logging with proper exception context</standard>
+          <standard>Verify error type and message in log output</standard>
+          <standard>Check for proper stack trace inclusion</standard>
+          <example>
+            <![CDATA[
+            @pytest.mark.asyncio
+            async def test_error_logging(bot: DemocracyBot) -> None:
+                """Test error logging in bot commands.
+
+                Args:
+                    bot: The Discord bot instance
+                """
+                with structlog.testing.capture_logs() as captured:
+                    # Trigger an error condition
+                    with pytest.raises(ValueError):
+                        await bot.process_command(None)
+
+                    # Verify error was logged properly
+                    assert any(
+                        log.get("level") == "error" and
+                        log.get("event") == "Command processing failed" and
+                        isinstance(log.get("error"), ValueError)
+                        for log in captured
+                    ), "Expected error log not found"
+
+                    # Check for stack trace
+                    assert any(
+                        "stack_info" in log for log in captured
+                    ), "Stack trace missing from error log"
+            ]]>
+          </example>
+        </error_logging>
+
+        <performance_considerations>
+          <standard>Clear log captures between tests to prevent memory buildup</standard>
+          <standard>Use appropriate log levels to avoid excessive logging in tests</standard>
+          <standard>Consider log volume when testing long-running operations</standard>
+          <example>
+            <![CDATA[
+            @pytest.fixture(autouse=True)
+            async def clear_logs() -> AsyncGenerator[None, None]:
+                """Clear log captures between tests."""
+                structlog.testing.LogCapture.clear()
+                yield
+                structlog.testing.LogCapture.clear()
+
+            @pytest.mark.asyncio
+            async def test_log_volume(bot: DemocracyBot) -> None:
+                """Test logging volume for long operations.
+
+                Args:
+                    bot: The Discord bot instance
+                """
+                with structlog.testing.capture_logs() as captured:
+                    # Perform long-running operation
+                    await bot.process_long_task()
+
+                    # Verify log volume is reasonable
+                    assert len(captured) < 100, "Excessive log volume detected"
+
+                    # Check log levels distribution
+                    info_logs = sum(1 for log in captured if log.get("level") == "info")
+                    debug_logs = sum(1 for log in captured if log.get("level") == "debug")
+                    assert info_logs <= debug_logs, "Too many INFO level logs"
+            ]]>
+          </example>
+        </performance_considerations>
+      </logging_setup>
+    </test_configuration>
+  </discord_testing_standards>
+</cursorrules>
