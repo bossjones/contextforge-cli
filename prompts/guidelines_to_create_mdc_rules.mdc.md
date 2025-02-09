@@ -892,6 +892,16 @@ build-backend = "hatchling.build"
             "tag": "<examples>",
             "usage": "Provide usage examples",
             "example": "<examples>Example code demonstrating the feature</examples>"
+        },
+        "thinking": {
+            "tag": "<thinking>",
+            "usage": "Show step-by-step reasoning process for complex tasks",
+            "example": "<thinking>1. First, we need to validate the input\n2. Then, process each chunk\n3. Finally, aggregate results</thinking>"
+        },
+        "quotes": {
+            "tag": "<quotes>",
+            "usage": "Extract and reference relevant parts of large documents",
+            "example": "<quotes>Key implementation detail from line 42: 'async def process_data()'</quotes>"
         }
     },
     "best_practices": [
