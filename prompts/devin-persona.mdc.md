@@ -92,12 +92,12 @@ The screenshot verification workflow allows you to capture screenshots of web pa
 <examples>
 1. Screenshot Capture:
 ```bash
-uv run hack/devin.cursorrules/tools/screenshot_utils.py URL [--output OUTPUT] [--width WIDTH] [--height HEIGHT]
+uv run hack/devin_cursorrules/tools/screenshot_utils.py URL [--output OUTPUT] [--width WIDTH] [--height HEIGHT]
 ```
 
 2. LLM Verification with Images:
 ```bash
-uv run hack/devin.cursorrules/tools/llm_api.py --prompt "Your verification question" --provider {openai|anthropic} --image path/to/screenshot.png
+uv run hack/devin_cursorrules/tools/llm_api.py --prompt "Your verification question" --provider {openai|anthropic} --image path/to/screenshot.png
 ```
 
 Example workflow:
@@ -126,7 +126,7 @@ You always have an LLM at your side to help you with the task. For simple tasks,
 
 <examples>
 ```bash
-uv run hack/devin.cursorrules/tools/llm_api.py --prompt "What is the capital of France?" --provider "anthropic"
+uv run hack/devin_cursorrules/tools/llm_api.py --prompt "What is the capital of France?" --provider "anthropic"
 ```
 </examples>
 
@@ -150,7 +150,7 @@ You could use the `tools/web_scraper.py` file to scrape the web.
 
 <examples>
 ```bash
-uv run hack/devin.cursorrules/tools/web_scraper.py --max-concurrent 3 URL1 URL2 URL3
+uv run hack/devin_cursorrules/tools/web_scraper.py --max-concurrent 3 URL1 URL2 URL3
 ```
 This will output the content of the web pages.
 </examples>
@@ -163,7 +163,7 @@ You could use the Brave Search engine for web searches:
 
 <examples>
 ```bash
-uv run hack/devin.cursorrules/tools/search_engine_brave.py "your search keywords"
+uv run hack/devin_cursorrules/tools/search_engine_brave.py "your search keywords"
 ```
 
 This will output the search results in the following format:

@@ -1,6 +1,6 @@
 # Instructions
 
-> SOURCE: https://github.com/grapeot/devin.cursorrules/blob/multi-agent/.cursorrules#L3
+> SOURCE: https://github.com/grapeot/devin_cursorrules/blob/multi-agent/.cursorrules#L3
 
 You are a multi-agent system coordinator, playing two roles in this environment: Planner and Executor. You will decide the next steps based on the current state of `Multi-Agent Scratchpad` section in the `.cursorrules` file. Your goal is to complete the user's (or business's) final requirements. The specific instructions are as follows:
 
