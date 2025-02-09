@@ -16,7 +16,14 @@ globs: ["**/*.mdc"]
         "implementations"
     ],
     "language": "python",
-    "python_version": ">=3.8"
+    "python_version": ">=3.8",
+    "recommended_tools": [
+        "ruff",
+        "mypy",
+        "pytest",
+        "black",
+        "isort"
+    ]
 }
 
 @structure {
@@ -312,10 +319,31 @@ class FeatureX:
 
 @python_standards {
     "typing": {
-        "annotations": "Required for all functions and classes",
-        "imports": "Use typing module for complex types",
-        "generics": "Use TypeVar and Generic for generic types",
-        "async": "Use proper async types (AsyncGenerator, etc.)"
+        "annotations": {
+            "required": true,
+            "style": "PEP 484",
+            "features": [
+                "Type hints for all functions and methods",
+                "Return type annotations",
+                "Generic types with TypeVar",
+                "Proper async types (AsyncGenerator, Awaitable)",
+                "Optional and Union types",
+                "Literal types for constants",
+                "TypedDict for structured dictionaries",
+                "Protocol for structural subtyping"
+            ]
+        },
+        "imports": {
+            "from_typing": [
+                "Any", "Dict", "List", "Optional", "Union",
+                "AsyncGenerator", "Awaitable", "Callable",
+                "TypeVar", "Generic", "Protocol", "runtime_checkable"
+            ],
+            "from_typing_extensions": [
+                "Annotated", "TypedDict", "NotRequired",
+                "Required", "Final", "Literal"
+            ]
+        }
     },
     "docstrings": {
         "style": "Google",
@@ -325,23 +353,112 @@ class FeatureX:
             "Raises",
             "Examples (when appropriate)"
         ],
-        "format": "Follow PEP 257"
+        "format": {
+            "standard": "PEP 257",
+            "indentation": "4 spaces",
+            "sections": {
+                "Args": {
+                    "format": "param_name (type): description",
+                    "required": true
+                },
+                "Returns": {
+                    "format": "type: description",
+                    "required": true
+                },
+                "Raises": {
+                    "format": "ExceptionType: description",
+                    "required": true
+                },
+                "Examples": {
+                    "format": "Code block with doctest format",
+                    "required": false
+                }
+            }
+        }
     },
     "error_handling": {
-        "exceptions": "Define custom exception hierarchy",
-        "logging": "Use structlog for all logging",
-        "context": "Include error context in exceptions"
+        "exceptions": {
+            "hierarchy": "Define custom exception hierarchy",
+            "base_class": "Create domain-specific base exception",
+            "naming": "Suffix with Error (e.g., ProcessingError)",
+            "context": "Include error context in exception message"
+        },
+        "logging": {
+            "library": "structlog",
+            "practices": [
+                "Use bound loggers",
+                "Include context in log messages",
+                "Proper error level selection",
+                "Exception traceback capture"
+            ]
+        }
     },
     "async_patterns": {
-        "io": "Use aiofiles for file operations",
-        "networking": "Use aiohttp for HTTP requests",
-        "concurrency": "Use asyncio.gather for parallel operations"
+        "io_operations": {
+            "files": "Use aiofiles for file operations",
+            "network": "Use aiohttp for HTTP requests",
+            "database": "Use asyncpg for PostgreSQL"
+        },
+        "concurrency": {
+            "patterns": [
+                "asyncio.gather for parallel operations",
+                "asyncio.create_task for background tasks",
+                "asyncio.Queue for producer-consumer patterns"
+            ],
+            "context_managers": [
+                "async with for resource management",
+                "asynccontextmanager for custom contexts"
+            ]
+        }
     },
     "testing": {
-        "framework": "pytest",
-        "fixtures": "Define reusable fixtures",
-        "async": "Use pytest-asyncio for async tests",
-        "mocking": "Use pytest-mock for mocking"
+        "framework": {
+            "primary": "pytest",
+            "plugins": [
+                "pytest-asyncio",
+                "pytest-mock",
+                "pytest-cov",
+                "pytest-xdist"
+            ]
+        },
+        "practices": {
+            "fixtures": {
+                "scope": ["function", "class", "module", "session"],
+                "async_support": "Use @pytest.mark.asyncio",
+                "cleanup": "Use yield fixtures for cleanup"
+            },
+            "mocking": {
+                "tool": "pytest-mock",
+                "patterns": [
+                    "Use mocker.patch for dependencies",
+                    "Mock async functions with AsyncMock"
+                ]
+            },
+            "assertions": {
+                "style": "pytest assert statements",
+                "async": "await async calls in tests",
+                "exceptions": "Use pytest.raises"
+            }
+        }
+    },
+    "code_style": {
+        "formatters": {
+            "black": "Code formatting",
+            "isort": "Import sorting",
+            "ruff": "Linting and additional formatting"
+        },
+        "line_length": 88,
+        "quotes": "double",
+        "imports": {
+            "order": [
+                "future",
+                "standard library",
+                "third party",
+                "first party",
+                "local"
+            ],
+            "style": "Use absolute imports"
+        }
     }
 }
 
@@ -349,28 +466,40 @@ class FeatureX:
 
 @mistakes [
     {
-        "id": "missing_frontmatter",
-        "wrong": "Starting directly with content",
-        "correct": "Include frontmatter at top",
-        "reason": "Frontmatter is required for Cursor to properly parse the file"
+        "id": "missing_type_annotations",
+        "wrong": "def process_data(data):",
+        "correct": "def process_data(data: Dict[str, Any]) -> ProcessingResult:",
+        "reason": "Type annotations are required for all functions and methods"
     },
     {
-        "id": "invalid_json",
-        "wrong": "Malformed JSON in annotations",
-        "correct": "Properly formatted JSON with quotes around keys",
-        "reason": "Annotations must contain valid JSON for proper parsing"
+        "id": "incorrect_async_patterns",
+        "wrong": "def read_file(path): return open(path).read()",
+        "correct": "async def read_file(path: str) -> str: async with aiofiles.open(path) as f: return await f.read()",
+        "reason": "Use async IO operations to prevent blocking"
     },
     {
-        "id": "inconsistent_structure",
-        "wrong": "Mixed levels of headings",
-        "correct": "Clear hierarchical structure",
-        "reason": "Consistent structure helps with readability and parsing"
+        "id": "improper_exception_handling",
+        "wrong": "except Exception as e: print(f'Error: {e}')",
+        "correct": "except Exception as e: logger.exception('Operation failed', error=str(e))",
+        "reason": "Use proper structured logging with context"
     },
     {
-        "id": "nonexistent_files",
-        "wrong": "Referencing files that don't exist in the workspace",
-        "correct": "Only reference files that exist and have been verified",
-        "reason": "Prevents broken links and maintains documentation integrity"
+        "id": "missing_docstrings",
+        "wrong": "class DataProcessor: ...",
+        "correct": """class DataProcessor:
+    \"\"\"Process data with proper documentation.
+
+    Attributes:
+        name: Processor name
+    \"\"\"
+    ...""",
+        "reason": "All classes and functions must have Google-style docstrings"
+    },
+    {
+        "id": "incorrect_imports",
+        "wrong": "from typing import *",
+        "correct": "from typing import Dict, List, Optional, Any",
+        "reason": "Explicit imports are required, no wildcard imports"
     }
 ]
 
@@ -378,23 +507,220 @@ class FeatureX:
 
 @validation {
     "required": [
-        "Frontmatter must be present and valid",
-        "All JSON must be properly formatted",
-        "Main title must be present",
-        "At least one content section",
-        "Complete implementation examples when relevant",
-        "All referenced files must exist in the workspace"
+        "All functions and methods must have type annotations",
+        "All classes and functions must have Google-style docstrings",
+        "Proper async/await patterns for IO operations",
+        "Structured logging with context",
+        "Custom exception hierarchy",
+        "Proper error handling and recovery",
+        "Configuration using Pydantic models",
+        "Test coverage with pytest"
     ],
     "recommended": [
-        "Version information",
-        "Last updated date",
-        "Clear examples",
-        "Proper code formatting",
-        "Type definitions",
-        "Validation rules",
-        "Verify file existence before referencing"
-    ]
+        "Use TypeVar and Generic for generic types",
+        "Implement Protocol for interface definitions",
+        "Use dataclasses or Pydantic models for data structures",
+        "Add runtime type checking where necessary",
+        "Implement proper cleanup in async context managers",
+        "Use dependency injection for better testing",
+        "Add performance monitoring and metrics",
+        "Implement proper retry mechanisms"
+    ],
+    "tools": {
+        "linting": {
+            "ruff": "Primary linter with all rules enabled",
+            "mypy": "Static type checking with strict mode"
+        },
+        "formatting": {
+            "black": "Code formatting",
+            "isort": "Import sorting"
+        },
+        "testing": {
+            "pytest": "Test framework with plugins",
+            "coverage": "Code coverage reporting"
+        }
+    }
 }
 
 @version "1.2.0"
-@last_updated "2024-03-19"
+@last_updated "2025-02-09"
+
+## Implementation Examples
+
+@implementation {
+    "language": "python",
+    "dependencies": [
+        "langchain>=0.3.17",
+        "structlog>=24.4.0",
+        "pydantic>=2.5.0",
+        "aiofiles>=23.2.1"
+    ],
+    "types": {
+        "ProcessingResult": "TypedDict for processing results",
+        "AsyncGenerator": "Async generator for streaming responses",
+        "ProcessingError": "Custom exception for processing failures"
+    }
+}
+
+```python
+from __future__ import annotations
+
+import asyncio
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    AsyncGenerator,
+    TypedDict,
+    Protocol,
+    runtime_checkable
+)
+
+import structlog
+from pydantic import BaseModel, Field
+
+logger = structlog.get_logger()
+
+class ProcessingError(Exception):
+    """Base exception for processing errors.
+
+    Attributes:
+        message: Error message
+        context: Additional error context
+    """
+    def __init__(self, message: str, context: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(message)
+        self.context = context or {}
+
+class ProcessingResult(TypedDict):
+    """Result of a processing operation.
+
+    Keys:
+        success: Whether processing was successful
+        data: Processed data
+        errors: Optional list of errors
+    """
+    success: bool
+    data: Dict[str, Any]
+    errors: Optional[List[str]]
+
+@runtime_checkable
+class Processor(Protocol):
+    """Protocol for objects that can process data."""
+
+    async def process(self, data: Dict[str, Any]) -> ProcessingResult:
+        """Process the given data.
+
+        Args:
+            data: Data to process
+
+        Returns:
+            ProcessingResult containing success status and processed data
+
+        Raises:
+            ProcessingError: If processing fails
+        """
+        ...
+
+class Config(BaseModel):
+    """Configuration for processing.
+
+    Attributes:
+        name: Process name
+        max_retries: Maximum number of retry attempts
+        timeout: Operation timeout in seconds
+    """
+    name: str = Field(..., description="Process name")
+    max_retries: int = Field(default=3, ge=0, description="Maximum retry attempts")
+    timeout: float = Field(default=30.0, gt=0, description="Operation timeout")
+
+class FeatureProcessor:
+    """Implementation of feature processing with proper Python patterns.
+
+    This class demonstrates:
+    - Type annotations
+    - Async/await patterns
+    - Error handling
+    - Logging with context
+    - Protocol implementation
+    - Configuration management
+
+    Attributes:
+        name: Processor name
+        config: Configuration object
+    """
+
+    def __init__(self, name: str, config: Optional[Config] = None) -> None:
+        """Initialize the processor.
+
+        Args:
+            name: Processor name
+            config: Optional configuration object
+
+        Raises:
+            ValueError: If name is empty
+        """
+        if not name:
+            raise ValueError("Name cannot be empty")
+        self.name = name
+        self.config = config or Config(name=name)
+        self.logger = logger.bind(processor_name=name)
+
+    async def process_stream(self) -> AsyncGenerator[str, None]:
+        """Process data asynchronously with streaming.
+
+        Yields:
+            Processed data chunks
+
+        Raises:
+            ProcessingError: If processing fails
+        """
+        try:
+            async with asyncio.timeout(self.config.timeout):
+                for i in range(10):
+                    self.logger.info(
+                        "Processing chunk",
+                        chunk_number=i,
+                        total_chunks=10
+                    )
+                    yield f"Processing chunk {i}"
+                    await asyncio.sleep(0.1)
+        except asyncio.TimeoutError as e:
+            self.logger.error(
+                "Processing timed out",
+                timeout=self.config.timeout
+            )
+            raise ProcessingError(
+                "Operation timed out",
+                context={"timeout": self.config.timeout}
+            ) from e
+        except Exception as e:
+            self.logger.exception(
+                "Processing failed",
+                error=str(e)
+            )
+            raise ProcessingError(
+                "Failed to process data",
+                context={"error": str(e)}
+            ) from e
+
+async def main() -> None:
+    """Example usage of FeatureProcessor."""
+    processor = FeatureProcessor(
+        "example",
+        Config(name="example", max_retries=3, timeout=5.0)
+    )
+
+    try:
+        async for chunk in processor.process_stream():
+            print(chunk)
+    except ProcessingError as e:
+        logger.error(
+            "Processing error",
+            error=str(e),
+            context=e.context
+        )
+
+if __name__ == "__main__":
+    asyncio.run(main())
