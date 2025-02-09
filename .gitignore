@@ -586,3 +586,8 @@ tree_*.txt
 .cursor-updates
 TODO.md
 engineering.md
+
+
+# Token tracking logs
+token_logs/
+test_token_logs/

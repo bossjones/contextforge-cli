@@ -1357,3 +1357,7 @@ code2prompt-example:
 
 open-claude-config:
 	cursor ~/Library/Application\ Support/Claude/claude_desktop_config.json
+
+playwright-install-chrome:
+	@echo "🚀 Installing Playwright Chrome browser"
+	uv run python -m playwright install chromium

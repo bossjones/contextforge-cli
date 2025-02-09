@@ -3,6 +3,8 @@
 ## 🌟 Quick Overview
 A powerful CLI tool for managing and enhancing AI context in your projects. ContextForge CLI provides advanced context management, memory systems, and automated documentation capabilities through a dual-mode operation system (Plan/Act) with confidence scoring.
 
+# AI Workflow(brain, documentations)
+
 ## 🔄 Core System
 1. **Memory System** (`@memories.md`)
    - Tracks all interactions and their outcomes
@@ -123,6 +125,147 @@ The system maintains context through intelligent cross-referencing:
    - Builds relationships between concepts
    - Identifies patterns in solutions
    - Suggests optimizations based on context
+
+# AI Workflow: 🤖 Multi-Agent System
+
+ContextForge CLI implements an advanced multi-agent architecture that enhances development through coordinated AI agents:
+
+### 🎯 Architecture
+
+The system uses two specialized agents working in tandem:
+
+1. **Planner** (Powered by Anthropic Claude)
+   - High-level strategic analysis
+   - Task breakdown and prioritization
+   - Success criteria definition
+   - Progress evaluation
+   - Risk assessment and mitigation
+
+2. **Executor** (Powered by Anthropic Claude)
+   - Task implementation
+   - Code generation and modification
+   - Testing and validation
+   - Progress reporting
+   - Issue identification and resolution
+
+### 📝 Coordination System
+
+The agents coordinate through a structured scratchpad system:
+
+1. **Multi-Agent Scratchpad** (`@.cursor/multi-agent-scratchpad.md`)
+   - Real-time task status tracking
+   - Inter-agent communication
+   - Progress documentation
+   - Blocker identification
+   - Next steps planning
+
+### 🔄 Workflow
+
+The multi-agent system follows a structured workflow:
+
+1. **Planning Phase**
+   ```
+   - Planner analyzes requirements
+   - Breaks down tasks into manageable units
+   - Sets clear success criteria
+   - Identifies potential risks
+   - Creates implementation strategy
+   ```
+
+2. **Execution Phase**
+   ```
+   - Executor implements planned tasks
+   - Reports progress continuously
+   - Identifies blockers early
+   - Maintains code quality
+   - Updates documentation
+   ```
+
+3. **Feedback Loop**
+   ```
+   - Regular status updates
+   - Blocker resolution
+   - Strategy adjustment
+   - Progress validation
+   - Knowledge capture
+   ```
+
+### 💡 Key Benefits
+
+1. **Enhanced Problem Solving**
+   - Separation of planning and execution
+   - Comprehensive task analysis
+   - Strategic approach to implementation
+   - Early risk identification
+   - Continuous improvement cycle
+
+2. **Improved Code Quality**
+   - Structured development process
+   - Consistent documentation
+   - Built-in quality checks
+   - Clear progress tracking
+   - Knowledge retention
+
+3. **Efficient Development**
+   - Clear task organization
+   - Reduced context switching
+   - Early blocker identification
+   - Streamlined communication
+   - Automated progress tracking
+
+### 🛠️ Usage
+
+To leverage the multi-agent system:
+
+1. **Initialize**
+   ```bash
+   # Create the multi-agent scratchpad
+   mkdir -p .cursor
+   touch .cursor/multi-agent-scratchpad.md
+   ```
+
+2. **Configure**
+   ```bash
+   # Set up environment variables
+   cp .env.example .env
+   # Add your API keys and configurations
+   ```
+
+3. **Develop**
+   ```bash
+   # The system automatically coordinates between agents
+   # through the multi-agent scratchpad
+   ```
+
+### 📈 Real-World Example
+
+Here's how the multi-agent system handles a typical development task:
+
+1. **Initial Planning**
+   ```
+   - Planner analyzes requirements
+   - Creates detailed task breakdown
+   - Sets clear success criteria
+   - Identifies potential challenges
+   ```
+
+2. **Implementation**
+   ```
+   - Executor follows planned steps
+   - Reports progress regularly
+   - Raises issues immediately
+   - Maintains documentation
+   ```
+
+3. **Iteration**
+   ```
+   - Continuous feedback loop
+   - Strategy adjustments
+   - Progress validation
+   - Knowledge capture
+   ```
+
+# Project Structure and Development Workflow
 
 ## 🔧 Installation
 

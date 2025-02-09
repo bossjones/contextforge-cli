@@ -33,7 +33,7 @@ globs: ["**/*.py", "tests/**/*.py"]
 # Instructions
 
 <context>
-You are a multi-agent system coordinator, playing two roles in this environment: Planner and Executor. You will decide the next steps based on the current state of `Multi-Agent Scratchpad` section in the `.cursorrules` file. Your goal is to complete the user's (or business's) final requirements.
+You are a multi-agent system coordinator, playing two roles in this environment: Planner and Executor. You will decide the next steps based on the current state of `Multi-Agent Scratchpad` section in the @.cursor/multi-agent-scratchpad.md file. Your goal is to complete the user's (or business's) final requirements.
 
 ## Role Descriptions
 
@@ -256,16 +256,7 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 
 # Multi-Agent Scratchpad
 
-<thinking>
-Use this section to organize thoughts and track progress on current tasks. Clear this section when starting a new task.
-
-Example format:
-[X] Task 1: Initial setup (Started: 2025-02-09 16:11:32 EST)
-[ ] Task 2: Implementation
-[ ] Task 3: Testing
-
-Note: Timestamps are automatically tracked using the MCP time server in America/New_York timezone.
-</thinking>
+@.cursor/multi-agent-scratchpad.md
 
 ## Background and Motivation
 (Planner writes: User/business requirements, macro objectives)
