@@ -389,3 +389,82 @@ Remember to:
 - Use memory profiling for performance testing
 - Handle flaky tests with retry mechanisms
 - Mock external services appropriately
+
+## Linting Standards and Commands
+
+1. CI Linting:
+   ```bash
+   # Run pylint with CI configuration
+   uv run pylint --output-format=colorized --disable=all --max-line-length=120 --enable=F,E --rcfile pyproject.toml src/contextforge_cli tests
+   ```
+
+2. Linting Configuration:
+   - Use `pyproject.toml` for pylint configuration
+   - Enable only errors (E) and fatal errors (F)
+   - Set max line length to 120 characters
+   - Apply to both source code and tests
+   - Use colorized output for better readability
+
+3. Common Linting Patterns:
+   ```bash
+   # Lint specific file
+   uv run pylint --output-format=colorized --disable=all --max-line-length=120 --enable=F,E --rcfile pyproject.toml src/contextforge_cli/specific_file.py
+
+   # Lint specific test file
+   uv run pylint --output-format=colorized --disable=all --max-line-length=120 --enable=F,E --rcfile pyproject.toml tests/unittests/test_specific.py
+
+   # Lint with detailed output
+   uv run pylint --output-format=parseable --disable=all --max-line-length=120 --enable=F,E --rcfile pyproject.toml src/contextforge_cli tests
+
+   # Lint and generate report
+   uv run pylint --output-format=json --disable=all --max-line-length=120 --enable=F,E --rcfile pyproject.toml src/contextforge_cli tests > pylint-report.json
+   ```
+
+4. Pre-commit Integration:
+   ```yaml
+   # In .pre-commit-config.yaml
+   - repo: local
+     hooks:
+       - id: pylint
+         name: pylint
+         entry: uv run pylint
+         language: system
+         types: [python]
+         args: [
+           "--output-format=colorized",
+           "--disable=all",
+           "--max-line-length=120",
+           "--enable=F,E",
+           "--rcfile=pyproject.toml"
+         ]
+   ```
+
+5. Error Categories:
+   - F: Fatal errors that prevent pylint from running
+   - E: Error for important programming issues
+
+   Common error codes:
+   - E0001: Syntax error
+   - E0100: __init__ method is a generator
+   - E0101: Explicit return in __init__
+   - E0102: Function/class/method already defined
+   - E0103: Break/continue outside loop
+   - E0104: Return outside function
+   - E0105: Yield outside function
+   - E0108: Duplicate argument name
+   - E0110: Abstract class with abstract methods instantiated
+   - E0111: Assignment to function call that doesn't return
+   - E0112: More than one starred expression in assignment
+   - E0113: Starred assignment target must be in a list or tuple
+   - E0114: Can use starred expression only in assignment target
+   - E0115: Name mandatory arguments before variable arguments
+   - E0116: Continue not supported inside finally clause
+   - E0117: nonlocal declaration not allowed at module level
+   - E0118: Name referenced before global declaration
+
+Remember to:
+- Run linting as part of CI pipeline
+- Fix all fatal (F) and error (E) level issues
+- Keep configuration in pyproject.toml
+- Use pre-commit hooks for local development
+- Generate reports for tracking improvements
