@@ -59,7 +59,32 @@ You are an AI assistant responsible for helping a developer maintain Python code
    - Use TypeVar and ParamSpec for generic types
    - Add runtime type checking where necessary
    - Use Literal types for constrained values
+   - For Pydantic v2:
+     - Use `Literal` types instead of `const` parameter for fields with fixed values
+     - Use `json_schema_extra` instead of extra keyword arguments on `Field`
+     - Example:
+       ```python
+       # Correct (Pydantic v2)
+       from typing import Literal
+       type: Literal["context"] = Field("context", description="Type of the annotation")
 
+       # Incorrect (Deprecated in Pydantic v2)
+       type: str = Field("context", const=True)
+
+       # Correct (for extra schema information)
+       from pydantic import Field
+       field: str = Field(
+           "value",
+           description="Field description",
+           json_schema_extra={
+               "examples": ["example1", "example2"],
+               "deprecated": False
+           }
+       )
+
+       # Incorrect (Deprecated extra kwargs)
+       field: str = Field("value", examples=["example1"], deprecated=False)
+       ```
 2. **Documentation**
    - Include PEP 257-compliant docstrings in Google style for all functions and classes
    - Add detailed comments for complex logic
@@ -211,6 +236,50 @@ You are an AI assistant responsible for helping a developer maintain Python code
    - Maintain lock file consistency
    - Use `uv.lock` for deterministic resolution
    - Document dependencies in pyproject.toml
+3. **Pydantic Configuration**
+   - Use Pydantic v2 best practices:
+     ```python
+     # Configuration in model
+     from pydantic import BaseModel, ConfigDict
+
+     class MyModel(BaseModel):
+         model_config = ConfigDict(
+             str_strip_whitespace=True,
+             validate_assignment=True,
+             frozen=True
+         )
+     ```
+   - Field Definitions:
+     - Use `Literal` types for constrained values
+     - Use `json_schema_extra` for additional schema information
+     - Use `Field` with type annotations
+     - Example:
+     ```python
+     from typing import Literal
+     from pydantic import BaseModel, Field
+
+     class AnnotationModel(BaseModel):
+         # Fixed value field
+         type: Literal["example"] = Field("example", description="Type of annotation")
+
+         # Optional field with default
+         value: str | None = Field(
+             None,
+             description="Value description",
+             json_schema_extra={"examples": ["value1", "value2"]}
+         )
+
+         # Required field with validation
+         count: int = Field(
+             ...,  # ... means required
+             gt=0,
+             description="Must be greater than zero"
+         )
+     ```
+   - Error Handling:
+     - Use custom validators with descriptive error messages
+     - Implement proper exception handling for validation errors
+     - Use `ValidationError` for structured error reporting
 
 ## Memory Management
 - Update `@memories.md` for all interactions
@@ -236,3 +305,37 @@ You are an AI assistant responsible for helping a developer maintain Python code
    - Keep main/master branch stable
    - Delete branches after merging
    - Use meaningful branch names
+
+
+## Lessons
+
+<context>
+## User Specified Lessons
+
+- You have a python venv in ./venv. Use it with UV.
+- Include info useful for debugging in the program output.
+- Read the file before you try to edit it.
+- Due to Cursor's limit, when you use `git` and `gh` and need to submit a multiline commit message, first write the message in a file, and then use `git commit -F <filename>` or similar command to commit. And then remove the file. Include "[Cursor] " in the commit message and PR title.
+
+## Cursor learned
+
+- For search results, ensure proper handling of different character encodings (UTF-8) for international queries
+- Add debug information to stderr while keeping the main output clean in stdout for better pipeline integration
+- When using seaborn styles in matplotlib, use 'seaborn-v0_8' instead of 'seaborn' as the style name due to recent seaborn version changes
+- Use 'gpt-4o' as the model name for OpenAI's GPT-4 with vision capabilities
+- Always use UV for Python package management and virtual environments
+- When using Pydantic v2:
+  - Replace `const=True` with `Literal` types from typing module for fields with fixed values
+  - Use `json_schema_extra` instead of passing extra kwargs to `Field`
+  - Be aware of deprecation warnings about extra kwargs on `Field` (like 'env') and update accordingly
+  - Keep type annotations up to date with the latest Pydantic practices
+  - Example of fixing const usage:
+    ```python
+    # Old (Pydantic v1)
+    type: str = Field("context", const=True)
+
+    # New (Pydantic v2)
+    from typing import Literal
+    type: Literal["context"] = Field("context", description="Type of the annotation")
+    ```
+</context>

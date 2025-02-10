@@ -7,7 +7,7 @@ information using the @annotation syntax.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Literal, Optional, Set
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -44,14 +44,14 @@ class ContextAnnotation(AnnotationContent):
         environment: Environment variables or configuration needed
     """
 
-    type: str = Field("context", const=True)
+    type: Literal["context"] = Field("context", description="Type of the annotation")
     language: str = Field(..., description="Programming language")
     python_version: str = Field(..., description="Required Python version")
     dependencies: list[str] = Field(
         default_factory=list, description="Required dependencies"
     )
     environment: dict[str, str] = Field(
-        default_factory=dict, description="Required environment variables"
+        default_factory=dict, description="Environment variables needed"
     )
 
 
@@ -69,7 +69,9 @@ class ImplementationAnnotation(AnnotationContent):
         constraints: Implementation constraints or limitations
     """
 
-    type: str = Field("implementation", const=True)
+    type: Literal["implementation"] = Field(
+        "implementation", description="Type of the annotation"
+    )
     patterns: list[str] = Field(
         default_factory=list, description="Design patterns to use"
     )
@@ -97,7 +99,9 @@ class ValidationAnnotation(AnnotationContent):
         custom_validators: Custom validation functions to apply
     """
 
-    type: str = Field("validation", const=True)
+    type: Literal["validation"] = Field(
+        "validation", description="Type of the annotation"
+    )
     rules: list[str] = Field(
         default_factory=list, description="Validation rules to apply"
     )
@@ -121,7 +125,7 @@ class ExamplesAnnotation(AnnotationContent):
         test_cases: Example test cases
     """
 
-    type: str = Field("examples", const=True)
+    type: Literal["examples"] = Field("examples", description="Type of the annotation")
     code_samples: list[str] = Field(default_factory=list, description="Code examples")
     usage_patterns: list[str] = Field(
         default_factory=list, description="Common usage patterns"
@@ -145,7 +149,7 @@ class ThinkingAnnotation(AnnotationContent):
         trade_offs: Trade-offs considered
     """
 
-    type: str = Field("thinking", const=True)
+    type: Literal["thinking"] = Field("thinking", description="Type of the annotation")
     decisions: list[str] = Field(default_factory=list, description="Key decisions made")
     rationale: list[str] = Field(
         default_factory=list, description="Reasoning behind decisions"
@@ -171,11 +175,11 @@ class QuotesAnnotation(AnnotationContent):
         relevance: Why each quote is relevant
     """
 
-    type: str = Field("quotes", const=True)
+    type: Literal["quotes"] = Field("quotes", description="Type of the annotation")
     quotes: list[str] = Field(default_factory=list, description="Relevant quotes")
     sources: list[str] = Field(default_factory=list, description="Quote sources")
     relevance: list[str] = Field(
-        default_factory=list, description="Relevance of each quote"
+        default_factory=list, description="Quote relevance explanations"
     )
 
 
@@ -192,7 +196,7 @@ class FormatAnnotation(AnnotationContent):
         naming_conventions: Naming conventions to follow
     """
 
-    type: str = Field("format", const=True)
+    type: Literal["format"] = Field("format", description="Type of the annotation")
     style_guide: str = Field(..., description="Style guide to follow")
     indentation: str = Field(..., description="Indentation requirements")
     line_length: int = Field(..., description="Maximum line length")
@@ -213,13 +217,13 @@ class OptionsAnnotation(AnnotationContent):
         allowed_values: Allowed values for each setting
     """
 
-    type: str = Field("options", const=True)
+    type: Literal["options"] = Field("options", description="Type of the annotation")
     settings: dict[str, Any] = Field(
         default_factory=dict, description="Configuration settings"
     )
     defaults: dict[str, Any] = Field(default_factory=dict, description="Default values")
     allowed_values: dict[str, list[Any]] = Field(
-        default_factory=dict, description="Allowed values for settings"
+        default_factory=dict, description="Allowed values"
     )
 
 
@@ -235,7 +239,7 @@ class RulesAnnotation(AnnotationContent):
         forbidden: Practices that are not allowed
     """
 
-    type: str = Field("rules", const=True)
+    type: Literal["rules"] = Field("rules", description="Type of the annotation")
     required: list[str] = Field(default_factory=list, description="Required rules")
     recommended: list[str] = Field(
         default_factory=list, description="Recommended rules"
