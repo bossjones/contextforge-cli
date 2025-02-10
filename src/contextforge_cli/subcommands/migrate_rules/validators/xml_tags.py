@@ -12,15 +12,15 @@ from xml.etree import ElementTree as ET
 
 from pydantic import BaseModel, Field
 
-from ..models.validation import (
+from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationContext,
     ValidationResult,
     ValidationSeverity,
 )
-from .base import BaseValidator
+from contextforge_cli.subcommands.migrate_rules.validators.base import BaseValidator
 
 if TYPE_CHECKING:
-    from ..models.context import MDCContext
+    from contextforge_cli.subcommands.migrate_rules.models.context import MDCContext
 
 
 class XMLTagConfig(BaseModel):

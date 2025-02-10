@@ -21,7 +21,7 @@ from typing import (
 import structlog
 from pydantic import BaseModel, Field
 
-from ..models.validation import (
+from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationContext,
     ValidationResult,
     ValidationSeverity,

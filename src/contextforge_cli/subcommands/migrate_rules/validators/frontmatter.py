@@ -14,14 +14,19 @@ import structlog
 import yaml
 from pydantic import BaseModel, Field
 
-from ..exceptions.validation import FrontmatterError
-from ..models.validation import (
+from contextforge_cli.subcommands.migrate_rules.exceptions.validation import (
+    FrontmatterError,
+)
+from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationContext,
     ValidationLocation,
     ValidationResult,
     ValidationSeverity,
 )
-from .base import BaseValidator, ValidatorConfig
+from contextforge_cli.subcommands.migrate_rules.validators.base import (
+    BaseValidator,
+    ValidatorConfig,
+)
 
 
 class FrontmatterSchema(BaseModel):

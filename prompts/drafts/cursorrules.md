@@ -146,12 +146,47 @@ If you need to use llm from this repo, you can refer to @devin-persona.mdc or @d
      5. Type checking imports
    - Sort imports alphabetically within sections
    - Use absolute imports over relative imports
+   - NEVER use relative imports (no .. or . notation)
 
 2. **Import Rules**
    - Add appropriate linter directives for imports
    - Use consistent import aliases
    - Import only what is needed
    - Keep import blocks organized and clean
+   - Always use full package path from root for local imports
+     Example:
+     ```python
+     # Correct
+     from contextforge_cli.subcommands.migrate_rules.models.validation import ValidationResult
+
+     # Incorrect
+     from ..models.validation import ValidationResult  # No relative imports
+     from .base import BaseValidator  # No relative imports
+     ```
+   - For TYPE_CHECKING imports, also use absolute imports:
+     ```python
+     if TYPE_CHECKING:
+         from contextforge_cli.subcommands.migrate_rules.models.context import MDCContext
+     ```
+
+3. **Import Structure**
+   - Keep imports grouped by their source:
+     ```python
+     from __future__ import annotations  # Future imports first
+
+     import abc  # Standard library imports
+     import asyncio
+     from typing import Optional, List
+
+     import structlog  # Third-party imports
+     from pydantic import BaseModel
+
+     from contextforge_cli.models import SomeModel  # Local imports
+     from contextforge_cli.utils import some_util
+
+     if TYPE_CHECKING:  # Type checking imports last
+         from contextforge_cli.types import SomeType
+     ```
 
 ## Tool Configuration Standards
 1. **Ruff Configuration**

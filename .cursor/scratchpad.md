@@ -132,33 +132,84 @@ Setting up the validation system for MDC (Markdown Configuration) files with pro
 - Flexible configuration system
 - Comprehensive test coverage for all components
 
-### Notes
-- Following async-first design
-- Using Pydantic for data validation
-- Implementing proper error handling
-- Adding comprehensive logging
+### Latest Implementation Notes (2024-03-21)
+1. File Reorganization:
+   - Renamed `cli.py` to `subcmd.py` for better clarity
+   - Updated imports in `test_cli.py` and `migrate_rules_cmd.py`
+   - Core validation logic now lives in `subcmd.py`
 
-### Latest Implementation Notes (2024-02-09)
-1. Completed CLI Integration:
-   - Implemented validate command with file/directory support
-   - Added configuration options for validation
-   - Implemented parallel processing with progress reporting
-   - Added rich table output for results
-   - Added color-coded severity levels
-   - Added summary statistics
-   - Added error handling
+### CLI Synchronization Needs (2024-03-21)
 
-2. Added CLI Tests:
-   - Configuration defaults
-   - CLI initialization
-   - File validation
-   - Parallel execution
-   - Error handling
-   - Command-line options
-   - Help output
-   - Result formatting
+#### Issues Found
+1. Path Type Handling:
+   - Both `subcmd.py` and `migrate_rules_cmd.py` have type errors with `path.is_file()` and `path.glob()` operations
+   - Need to ensure proper Path object conversion in both files
+   - Should be handled at the argument parsing level
 
-3. Next up:
-   - Add configuration file support
-   - Add comprehensive documentation
-   - Add usage examples
+2. Validator Import Issues:
+   - `subcmd.py` has missing imports for validator classes and configs
+   - Need to implement or properly import:
+     - `AnnotationsConfig`, `AnnotationsValidator`
+     - `ContentConfig`, `ContentValidator`
+     - `FrontmatterConfig`, `FrontmatterValidator`
+     - `XMLTagConfig`, `XMLTagValidator`
+
+3. Duplicate Code:
+   - File validation logic is duplicated between both files
+   - Should move core validation logic to `subcmd.py` and have `migrate_rules_cmd.py` only handle command routing
+
+4. Code Organization:
+   - `list_validators()` command exists only in `migrate_rules_cmd.py`
+   - Should move validator metadata to a central location
+   - Consider creating a validator registry pattern
+
+5. Error Handling:
+   - Need consistent error handling between both files
+   - Should centralize error handling in `subcmd.py`
+
+#### Action Items
+1. [ ] Fix Path handling:
+   - Add type conversion in Typer argument callback
+   - Ensure all path operations use pathlib.Path objects
+
+2. [ ] Implement missing validator components:
+   - Create validator configuration classes
+   - Implement validator classes
+   - Add proper imports
+
+3. [ ] Refactor validation logic:
+   - Move core validation to `subcmd.py`
+   - Update `migrate_rules_cmd.py` to use `subcmd.py` functions
+   - Remove duplicated code
+
+4. [ ] Improve validator management:
+   - Create validator registry
+   - Move validator metadata to central location
+   - Update `list_validators` to use registry
+
+5. [ ] Centralize error handling:
+   - Move error handling to `subcmd.py`
+   - Ensure consistent error reporting
+   - Add proper error context
+
+6. [ ] Add missing docstrings and type hints:
+   - Update all function signatures
+   - Add comprehensive docstrings
+   - Ensure proper return type annotations
+
+7. [ ] Add tests:
+   - Test path handling
+   - Test validator registration
+   - Test error handling
+   - Test CLI integration
+
+8. [ ] Update documentation:
+   - Update all references from `cli.py` to `subcmd.py`
+   - Ensure consistent naming in docstrings and comments
+   - Update import examples in documentation
+
+### Confidence: 85%
+- Clear understanding of issues
+- Well-defined action items
+- Some complexity in refactoring validation logic
+- Need to carefully handle backward compatibility

@@ -16,14 +16,24 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from .models.context import MDCContext
-from .models.validation import ValidationResult, ValidationSeverity
-from .validators.annotations import AnnotationsConfig, AnnotationsValidator
-from .validators.base import BaseValidator
-from .validators.content import ContentConfig, ContentValidator
-from .validators.cross_refs import CrossRefConfig, CrossRefValidator
-from .validators.frontmatter import FrontmatterConfig, FrontmatterValidator
-from .validators.xml_tags import XMLTagConfig, XMLTagValidator
+from contextforge_cli.subcommands.migrate_rules.models.context import MDCContext
+from contextforge_cli.subcommands.migrate_rules.models.validation import (
+    ValidationResult,
+    ValidationSeverity,
+)
+from contextforge_cli.subcommands.migrate_rules.validators.annotations import (
+    AnnotationsConfig,
+    AnnotationsValidator,
+)
+from contextforge_cli.subcommands.migrate_rules.validators.base import BaseValidator
+from contextforge_cli.subcommands.migrate_rules.validators.content import (
+    ContentConfig,
+    ContentValidator,
+)
+from contextforge_cli.subcommands.migrate_rules.validators.xml_tags import (
+    XMLTagConfig,
+    XMLTagValidator,
+)
 
 if TYPE_CHECKING:
     from rich.progress import TaskID

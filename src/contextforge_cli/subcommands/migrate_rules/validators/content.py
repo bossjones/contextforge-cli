@@ -15,14 +15,19 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import structlog
 from pydantic import BaseModel, Field
 
-from ..exceptions.validation import ContentError
-from ..models.validation import (
+from contextforge_cli.subcommands.migrate_rules.exceptions.validation import (
+    ContentError,
+)
+from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationContext,
     ValidationLocation,
     ValidationResult,
     ValidationSeverity,
 )
-from .base import BaseValidator, ValidatorConfig
+from contextforge_cli.subcommands.migrate_rules.validators.base import (
+    BaseValidator,
+    ValidatorConfig,
+)
 
 
 @dataclass
