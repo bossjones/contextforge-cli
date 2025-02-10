@@ -30,6 +30,14 @@ from contextforge_cli.subcommands.migrate_rules.validators.content import (
     ContentConfig,
     ContentValidator,
 )
+from contextforge_cli.subcommands.migrate_rules.validators.cross_refs import (
+    CrossRefConfig,
+    CrossRefValidator,
+)
+from contextforge_cli.subcommands.migrate_rules.validators.frontmatter import (
+    FrontmatterConfig,
+    FrontmatterValidator,
+)
 from contextforge_cli.subcommands.migrate_rules.validators.xml_tags import (
     XMLTagConfig,
     XMLTagValidator,
@@ -244,12 +252,19 @@ class ValidationCli:
 app = typer.Typer()
 
 
+def path_callback(paths: list[str] | None) -> list[Path] | None:
+    if not paths:
+        return None
+    return [Path(p) if isinstance(p, str) else p for p in paths]
+
+
 @app.command()
 def validate(
     paths: list[Path] = typer.Argument(
         None,
         help="Paths to files or directories to validate",
         exists=True,
+        callback=path_callback,
     ),
     include: list[str] = typer.Option(
         None,
