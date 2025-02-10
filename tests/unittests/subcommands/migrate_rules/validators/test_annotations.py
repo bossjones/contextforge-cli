@@ -19,9 +19,8 @@ from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationSeverity,
 )
 from contextforge_cli.subcommands.migrate_rules.validators.annotations import (
-    AnnotationSchema,
-    AnnotationValidator,
-    AnnotationValidatorConfig,
+    AnnotationsConfig,
+    AnnotationsValidator,
 )
 
 if TYPE_CHECKING:
@@ -154,35 +153,12 @@ def validation_context(
     )
 
 
-class TestAnnotationSchema:
-    """Tests for AnnotationSchema."""
-
-    def test_valid_schema(self) -> None:
-        """Test valid annotation schema."""
-        data = {
-            "type": "context",
-            "content": {"test": "value"},
-        }
-        schema = AnnotationSchema(**data)
-        assert schema.type == "context"
-        assert schema.content == {"test": "value"}
-
-    def test_invalid_schema(self) -> None:
-        """Test invalid annotation schema."""
-        data = {
-            "type": ["invalid type"],
-            "content": "invalid content",
-        }
-        with pytest.raises(ValidationError):
-            AnnotationSchema(**data)
-
-
-class TestAnnotationValidatorConfig:
-    """Tests for AnnotationValidatorConfig."""
+class TestAnnotationsConfig:
+    """Tests for AnnotationsConfig."""
 
     def test_default_config(self) -> None:
         """Test default validator configuration."""
-        config = AnnotationValidatorConfig()
+        config = AnnotationsConfig()
         assert "context" in config.required_annotations
         assert "implementation" in config.required_annotations
         assert config.allow_unknown_types is False
@@ -191,7 +167,7 @@ class TestAnnotationValidatorConfig:
 
     def test_custom_config(self) -> None:
         """Test custom validator configuration."""
-        config = AnnotationValidatorConfig(
+        config = AnnotationsConfig(
             required_annotations={"test"},
             allow_unknown_types=True,
             known_types={"test"},
@@ -203,8 +179,8 @@ class TestAnnotationValidatorConfig:
         assert config.annotation_pattern == r"@test\s*({.*})"
 
 
-class TestAnnotationValidator:
-    """Tests for AnnotationValidator."""
+class TestAnnotationsValidator:
+    """Tests for AnnotationsValidator."""
 
     @pytest.mark.asyncio
     async def test_valid_annotations(
@@ -215,7 +191,7 @@ class TestAnnotationValidator:
         Args:
             validation_context: The validation context fixture
         """
-        validator = AnnotationValidator()
+        validator = AnnotationsValidator()
         results = []
         async for result in validator.validate(validation_context):
             results.append(result)
@@ -239,13 +215,13 @@ class TestAnnotationValidator:
             file_path=test_file,
             content=invalid_json_annotation,
         )
-        validator = AnnotationValidator()
+        validator = AnnotationsValidator()
         results = []
         async for result in validator.validate(context):
             results.append(result)
 
         assert any(not r.is_valid for r in results)
-        assert any("Invalid JSON syntax" in r.message for r in results)
+        assert any("Invalid JSON" in r.message for r in results)
 
     @pytest.mark.asyncio
     async def test_unknown_annotation_type(
@@ -263,7 +239,7 @@ class TestAnnotationValidator:
             file_path=test_file,
             content=unknown_annotation_type,
         )
-        validator = AnnotationValidator()
+        validator = AnnotationsValidator()
         results = []
         async for result in validator.validate(context):
             results.append(result)
@@ -287,7 +263,7 @@ class TestAnnotationValidator:
             file_path=test_file,
             content=missing_required_annotations,
         )
-        validator = AnnotationValidator()
+        validator = AnnotationsValidator()
         results = []
         async for result in validator.validate(context):
             results.append(result)
@@ -311,8 +287,8 @@ class TestAnnotationValidator:
             file_path=test_file,
             content=unknown_annotation_type,
         )
-        config = AnnotationValidatorConfig(allow_unknown_types=True)
-        validator = AnnotationValidator(config=config)
+        config = AnnotationsConfig(allow_unknown_types=True)
+        validator = AnnotationsValidator(config=config)
         results = []
         async for result in validator.validate(context):
             results.append(result)

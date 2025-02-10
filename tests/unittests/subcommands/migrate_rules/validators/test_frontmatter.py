@@ -20,9 +20,9 @@ from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationSeverity,
 )
 from contextforge_cli.subcommands.migrate_rules.validators.frontmatter import (
+    FrontmatterConfig,
     FrontmatterSchema,
     FrontmatterValidator,
-    FrontmatterValidatorConfig,
 )
 
 if TYPE_CHECKING:
@@ -157,12 +157,12 @@ class TestFrontmatterSchema:
             FrontmatterSchema(**data)
 
 
-class TestFrontmatterValidatorConfig:
-    """Tests for FrontmatterValidatorConfig."""
+class TestFrontmatterConfig:
+    """Tests for FrontmatterConfig."""
 
     def test_default_config(self) -> None:
         """Test default validator configuration."""
-        config = FrontmatterValidatorConfig()
+        config = FrontmatterConfig()
         assert config.required_fields == {"description", "globs"}
         assert config.allow_extra_fields is False
         assert config.max_description_length == 100
@@ -170,7 +170,7 @@ class TestFrontmatterValidatorConfig:
 
     def test_custom_config(self) -> None:
         """Test custom validator configuration."""
-        config = FrontmatterValidatorConfig(
+        config = FrontmatterConfig(
             required_fields={"test_field"},
             allow_extra_fields=True,
             max_description_length=50,
@@ -281,7 +281,7 @@ class TestFrontmatterValidator:
     async def test_long_description(
         self, workspace_root: Path, test_file: Path
     ) -> None:
-        """Test validation of frontmatter with too-long description.
+        """Test detection of too-long description.
 
         Args:
             workspace_root: The workspace root path

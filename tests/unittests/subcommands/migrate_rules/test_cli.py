@@ -11,16 +11,16 @@ from typing import TYPE_CHECKING, List
 import pytest
 from typer.testing import CliRunner
 
-from contextforge_cli.subcommands.migrate_rules.cli import (
-    ValidationCli,
-    ValidationCliConfig,
-    app,
-)
 from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationContext,
     ValidationResult,
     ValidationSeverity,
 )
+from contextforge_cli.subcommands.migrate_rules.subcmd import (
+    ValidationCli,
+    ValidationCliConfig,
+)
+from contextforge_cli.subcommands.migrate_rules_cmd import APP as app
 
 if TYPE_CHECKING:
     from _pytest.capture import CaptureFixture

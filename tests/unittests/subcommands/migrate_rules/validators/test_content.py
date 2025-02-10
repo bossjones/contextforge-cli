@@ -20,8 +20,8 @@ from contextforge_cli.subcommands.migrate_rules.models.validation import (
 )
 from contextforge_cli.subcommands.migrate_rules.validators.content import (
     CodeBlockInfo,
+    ContentConfig,
     ContentValidator,
-    ContentValidatorConfig,
     HeadingInfo,
 )
 
@@ -198,12 +198,12 @@ class TestCodeBlockInfo:
         assert block.indentation == 0
 
 
-class TestContentValidatorConfig:
-    """Tests for ContentValidatorConfig."""
+class TestContentConfig:
+    """Tests for ContentConfig."""
 
     def test_default_config(self) -> None:
         """Test default validator configuration."""
-        config = ContentValidatorConfig()
+        config = ContentConfig()
         assert config.max_heading_level == 4
         assert "Purpose" in config.required_sections
         assert "python" in config.code_block_languages
@@ -213,7 +213,7 @@ class TestContentValidatorConfig:
 
     def test_custom_config(self) -> None:
         """Test custom validator configuration."""
-        config = ContentValidatorConfig(
+        config = ContentConfig(
             max_heading_level=3,
             required_sections={"Custom"},
             code_block_languages={"custom-lang"},
