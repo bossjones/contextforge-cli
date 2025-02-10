@@ -183,6 +183,7 @@ select = [
   "I",  # isort
 ]
 ignore = [
+  "B027", # Unused variable - acceptable in minimal examples
   "B007",  # Loop control variable not used - acceptable in minimal examples
   "B008", # function-call-in-default-argument Checks for function calls in default function arguments.
   "B018",  # Useless expression - allowed for illustrative code snippets

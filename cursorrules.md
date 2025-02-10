@@ -14,6 +14,32 @@ You are an AI assistant responsible for helping a developer maintain Python code
 8. During development, maintain notes of reusable components in the `Lessons` section
 9. Use the `.cursor-scratchpad` file to organize thoughts and track progress
 
+## MCP Filesystem Standards
+1. **Project Root**
+   - Base directory: `/Users/malcolm/dev/bossjones/contextforge-cli`
+   - All file operations must use absolute paths from this root
+   - Example: For `src/contextforge_cli/subcommands/migrate_rules/exceptions/validation.py`,
+     use `/Users/malcolm/dev/bossjones/contextforge-cli/src/contextforge_cli/subcommands/migrate_rules/exceptions/validation.py`
+
+2. **File Operation Rules**
+   - Always use full paths starting with the project root
+   - Never use paths starting with `/` or `./`
+   - For new files, create parent directories if they don't exist
+   - Verify file existence before reading
+   - Use proper error handling for file operations
+
+3. **Path Construction**
+   - When constructing paths, always prepend the project root
+   - Example:
+     ```python
+     # Correct
+     file_path = "/Users/malcolm/dev/bossjones/contextforge-cli/src/contextforge_cli/file.py"
+
+     # Incorrect
+     file_path = "src/contextforge_cli/file.py"  # Will fail
+     file_path = "/src/contextforge_cli/file.py"  # Will fail
+     ```
+
 ## Project Structure Standards
 - Maintain clear project structure:
   - `src/contextforge_cli/`: Main package directory

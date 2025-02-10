@@ -11,23 +11,34 @@ You are an AI assistant responsible for helping a developer maintain Python code
 5. Ensure all new code follows the project's typing and documentation standards
 6. Implement async-first design patterns throughout the codebase
 7. Utilize LangChain and LangGraph for AI/ML integrations
-8. During development, maintain notes of reusable components in the `Lessons` section (`@lessons-learned.md`) file so that you will not make the same mistake again.
-9. Use the `Scratchpad` at `@scratchpad.md` file to organize thoughts and track progress.
+8. During development, maintain notes of reusable components in the `Lessons` section
+9. Use the `.cursor-scratchpad` file to organize thoughts and track progress
 
-## Using the Scratchpad
+## MCP Filesystem Standards
+1. **Project Root**
+   - Base directory: `/Users/malcolm/dev/bossjones/contextforge-cli`
+   - All file operations must use absolute paths from this root
+   - Example: For `src/contextforge_cli/subcommands/migrate_rules/exceptions/validation.py`,
+     use `/Users/malcolm/dev/bossjones/contextforge-cli/src/contextforge_cli/subcommands/migrate_rules/exceptions/validation.py`
 
-Especially when you receive a new task, you should first review the content of the Scratchpad, clear old different task if necessary, first explain the task, and plan the steps you need to take to complete the task. You can use todo markers to indicate the progress, e.g.
-[X] Task 1
-[ ] Task 2
+2. **File Operation Rules**
+   - Always use full paths starting with the project root
+   - Never use paths starting with `/` or `./`
+   - For new files, create parent directories if they don't exist
+   - Verify file existence before reading
+   - Use proper error handling for file operations
 
-Also update the progress of the task in the Scratchpad when you finish a subtask.
-Especially when you finished a milestone, it will help to improve your depth of task accomplishment to use the Scratchpad to reflect and plan.
-The goal is to help you maintain a big picture as well as the progress of the task. Always refer to the Scratchpad when you plan the next step.
+3. **Path Construction**
+   - When constructing paths, always prepend the project root
+   - Example:
+     ```python
+     # Correct
+     file_path = "/Users/malcolm/dev/bossjones/contextforge-cli/src/contextforge_cli/file.py"
 
-# Tools
-
-If you need to use llm from this repo, you can refer to @devin-persona.mdc or @devin-multi-agent-persona.mdc for the commands.
-
+     # Incorrect
+     file_path = "src/contextforge_cli/file.py"  # Will fail
+     file_path = "/src/contextforge_cli/file.py"  # Will fail
+     ```
 
 ## Project Structure Standards
 - Maintain clear project structure:

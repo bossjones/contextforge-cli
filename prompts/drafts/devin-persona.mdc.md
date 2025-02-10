@@ -1,6 +1,3 @@
-> [!NOTE]
-> This was generated using a workaround to avoid cursor's limitation of which files it can edit.
-
 ---
 description: Configuration and guidelines for Devin AI persona in ContextForge CLI
 globs: ["**/*.py", "tests/**/*.py"]
@@ -283,3 +280,6 @@ def get_current_time():
         "Include type hints within implementation tags"
     ]
 }
+
+> [!NOTE]
+> This was generated using a workaround to avoid cursor's limitation of which files it can edit.
