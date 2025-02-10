@@ -63,7 +63,7 @@ class CodeBlockInfo(BaseModel):
     indentation: int = Field(0, description="Block's indentation level")
 
 
-class ContentValidatorConfig(ValidatorConfig):
+class ContentConfig(ValidatorConfig):
     """Configuration for content structure validation.
 
     Attributes:
@@ -127,7 +127,7 @@ class ContentValidator(BaseValidator):
         self,
         name: str = "content",
         description: str = "Validates markdown content structure in MDC files",
-        config: ContentValidatorConfig | None = None,
+        config: ContentConfig | None = None,
     ) -> None:
         """Initialize the content validator.
 
@@ -136,8 +136,8 @@ class ContentValidator(BaseValidator):
             description: Description of what this validator checks
             config: Optional validator configuration
         """
-        super().__init__(name, description, config or ContentValidatorConfig())
-        self.config = config or ContentValidatorConfig()
+        super().__init__(name, description, config or ContentConfig())
+        self.config = config or ContentConfig()
         self._heading_pattern: Pattern[str] = re.compile(r"^(#{1,6})\s+(.+)$")
         self._code_block_start: Pattern[str] = re.compile(r"^(`{3,}|~{3,})([\w-]+)?$")
         self._code_block_end: Pattern[str] = re.compile(r"^(`{3,}|~{3,})$")

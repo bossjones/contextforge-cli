@@ -45,7 +45,7 @@ class FrontmatterSchema(BaseModel):
     )
 
 
-class FrontmatterValidatorConfig(ValidatorConfig):
+class FrontmatterConfig(ValidatorConfig):
     """Configuration for frontmatter validation.
 
     Attributes:
@@ -90,7 +90,7 @@ class FrontmatterValidator(BaseValidator):
         self,
         name: str = "frontmatter",
         description: str = "Validates YAML frontmatter in MDC files",
-        config: FrontmatterValidatorConfig | None = None,
+        config: FrontmatterConfig | None = None,
     ) -> None:
         """Initialize the frontmatter validator.
 
@@ -99,8 +99,8 @@ class FrontmatterValidator(BaseValidator):
             description: Description of what this validator checks
             config: Optional validator configuration
         """
-        super().__init__(name, description, config or FrontmatterValidatorConfig())
-        self.config = config or FrontmatterValidatorConfig()
+        super().__init__(name, description, config or FrontmatterConfig())
+        self.config = config or FrontmatterConfig()
 
     async def validate(
         self, context: ValidationContext
@@ -121,10 +121,15 @@ class FrontmatterValidator(BaseValidator):
         # Check if frontmatter exists and is at the start
         if not content.startswith("---"):
             yield ValidationResult(
-                is_valid=False,
-                severity=ValidationSeverity.ERROR,
                 message="Frontmatter must be at the start of the file and begin with '---'",
-                location=ValidationLocation(line=1, column=1, section="frontmatter"),
+                line_number=1,
+                severity=ValidationSeverity.ERROR,
+                context=context.with_location(
+                    ValidationLocation(
+                        line_number=1,
+                        validator_name=self.name,
+                    )
+                ),
             )
             return
 
@@ -132,10 +137,15 @@ class FrontmatterValidator(BaseValidator):
         match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
         if not match:
             yield ValidationResult(
-                is_valid=False,
-                severity=ValidationSeverity.ERROR,
                 message="Invalid frontmatter format. Must be enclosed in '---'",
-                location=ValidationLocation(line=1, column=1, section="frontmatter"),
+                line_number=1,
+                severity=ValidationSeverity.ERROR,
+                context=context.with_location(
+                    ValidationLocation(
+                        line_number=1,
+                        validator_name=self.name,
+                    )
+                ),
             )
             return
 
@@ -145,14 +155,14 @@ class FrontmatterValidator(BaseValidator):
             data = yaml.safe_load(frontmatter_content)
             if not isinstance(data, dict):
                 yield ValidationResult(
-                    is_valid=False,
-                    severity=ValidationSeverity.ERROR,
                     message="Frontmatter must be a YAML dictionary",
-                    location=ValidationLocation(
-                        line=1,
-                        column=1,
-                        section="frontmatter",
-                        context=frontmatter_content,
+                    line_number=1,
+                    severity=ValidationSeverity.ERROR,
+                    context=context.with_location(
+                        ValidationLocation(
+                            line_number=1,
+                            validator_name=self.name,
+                        )
                     ),
                 )
                 return
@@ -171,80 +181,69 @@ class FrontmatterValidator(BaseValidator):
                         > self.config.max_description_length
                     ):
                         yield ValidationResult(
-                            is_valid=False,
-                            severity=ValidationSeverity.ERROR,
                             message=f"Description exceeds maximum length of {self.config.max_description_length} characters",
-                            location=ValidationLocation(
-                                line=1,
-                                column=1,
-                                section="frontmatter",
-                                context=frontmatter.description,
+                            line_number=1,
+                            severity=ValidationSeverity.ERROR,
+                            context=context.with_location(
+                                ValidationLocation(
+                                    line_number=1,
+                                    validator_name=self.name,
+                                )
                             ),
                         )
 
                     # Validate globs
                     if not frontmatter.globs:
                         yield ValidationResult(
-                            is_valid=False,
-                            severity=ValidationSeverity.ERROR,
                             message="At least one glob pattern is required",
-                            location=ValidationLocation(
-                                line=1,
-                                column=1,
-                                section="frontmatter",
-                                context="globs: []",
+                            line_number=1,
+                            severity=ValidationSeverity.ERROR,
+                            context=context.with_location(
+                                ValidationLocation(
+                                    line_number=1,
+                                    validator_name=self.name,
+                                )
                             ),
                         )
 
                     # Validate related_docs if present
                     if frontmatter.related_docs:
                         for doc in frontmatter.related_docs:
-                            doc_path = context.workspace_root / doc
-                            if not doc_path.exists():
+                            if not (context.workspace_root / doc).exists():
                                 yield ValidationResult(
-                                    is_valid=False,
-                                    severity=ValidationSeverity.ERROR,
                                     message=f"Referenced document does not exist: {doc}",
-                                    location=ValidationLocation(
-                                        line=1,
-                                        column=1,
-                                        section="frontmatter",
-                                        context=f"related_docs: {doc}",
+                                    line_number=1,
+                                    severity=ValidationSeverity.ERROR,
+                                    context=context.with_location(
+                                        ValidationLocation(
+                                            line_number=1,
+                                            validator_name=self.name,
+                                        )
                                     ),
                                 )
 
-                    # Success if we got here
-                    yield ValidationResult(
-                        is_valid=True,
-                        severity=ValidationSeverity.INFO,
-                        message="Frontmatter validation successful",
-                        location=ValidationLocation(
-                            line=1, column=1, section="frontmatter"
-                        ),
-                    )
-
             except Exception as e:
                 yield ValidationResult(
-                    is_valid=False,
-                    severity=ValidationSeverity.ERROR,
                     message=f"Schema validation failed: {str(e)}",
-                    location=ValidationLocation(
-                        line=1,
-                        column=1,
-                        section="frontmatter",
-                        context=frontmatter_content,
+                    line_number=1,
+                    severity=ValidationSeverity.ERROR,
+                    context=context.with_location(
+                        ValidationLocation(
+                            line_number=1,
+                            validator_name=self.name,
+                        )
                     ),
                 )
 
         except yaml.YAMLError as e:
             yield ValidationResult(
-                is_valid=False,
-                severity=ValidationSeverity.ERROR,
                 message=f"Invalid YAML syntax: {str(e)}",
-                location=ValidationLocation(
-                    line=1,
-                    column=1,
-                    section="frontmatter",
-                    context=frontmatter_content,
+                line_number=1,
+                severity=ValidationSeverity.ERROR,
+                context=context.with_location(
+                    ValidationLocation(
+                        line_number=1,
+                        validator_name=self.name,
+                    )
                 ),
             )

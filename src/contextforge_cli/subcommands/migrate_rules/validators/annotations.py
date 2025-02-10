@@ -18,6 +18,10 @@ from pydantic import BaseModel, Field
 from contextforge_cli.subcommands.migrate_rules.exceptions.validation import (
     AnnotationError,
 )
+from contextforge_cli.subcommands.migrate_rules.models.annotations import (
+    ANNOTATION_TYPE_MAP,
+    AnnotationContent,
+)
 from contextforge_cli.subcommands.migrate_rules.models.validation import (
     ValidationContext,
     ValidationLocation,
@@ -29,20 +33,10 @@ from contextforge_cli.subcommands.migrate_rules.validators.base import (
     ValidatorConfig,
 )
 
-
-class AnnotationSchema(BaseModel):
-    """Schema for MDC file annotations.
-
-    Attributes:
-        type: Type of the annotation (e.g., "context", "rules", "implementation")
-        content: The JSON content of the annotation
-    """
-
-    type: str = Field(..., description="Type of the annotation")
-    content: dict[str, Any] = Field(..., description="JSON content of the annotation")
+logger = structlog.get_logger(__name__)
 
 
-class AnnotationValidatorConfig(ValidatorConfig):
+class AnnotationsConfig(ValidatorConfig):
     """Configuration for annotation validation.
 
     Attributes:
@@ -61,54 +55,41 @@ class AnnotationValidatorConfig(ValidatorConfig):
         description="Whether to allow unknown annotation types",
     )
     known_types: set[str] = Field(
-        default={
-            "context",
-            "implementation",
-            "rules",
-            "format",
-            "options",
-            "examples",
-            "validation",
-            "thinking",
-            "quotes",
-        },
+        default_factory=lambda: set(ANNOTATION_TYPE_MAP.keys()),
         description="Set of known annotation types",
     )
     annotation_pattern: str = Field(
-        default=r"@(\w+)\s*({[^@]*})",
+        default=r"@(\w+)\s*{([^}]*)}",
         description="Regex pattern for matching annotations",
     )
 
 
-class AnnotationValidator(BaseValidator):
-    """Validator for @annotation blocks in MDC files.
+class AnnotationsValidator(BaseValidator):
+    """Validator for MDC file annotations.
 
     This validator checks:
-    - Presence of required annotations
-    - JSON syntax in annotation content
-    - Annotation type validity
-    - Content structure based on type
-    - Nesting and formatting
+    1. Required annotations are present
+    2. Annotation types are known/allowed
+    3. JSON content is valid
+    4. Content matches schema for each type
     """
 
     def __init__(
         self,
         name: str = "annotations",
         description: str = "Validates @annotation blocks in MDC files",
-        config: AnnotationValidatorConfig | None = None,
+        config: AnnotationsConfig | None = None,
     ) -> None:
-        """Initialize the annotation validator.
+        """Initialize the AnnotationValidator.
 
         Args:
             name: Name of the validator
-            description: Description of what this validator checks
-            config: Optional validator configuration
+            description: Description of what this validator does
+            config: Configuration for the validator
         """
-        super().__init__(name, description, config or AnnotationValidatorConfig())
-        self.config = config or AnnotationValidatorConfig()
-        self._pattern: Pattern[str] = re.compile(
-            self.config.annotation_pattern, re.MULTILINE | re.DOTALL
-        )
+        super().__init__(name, description, config or AnnotationsConfig())
+        self.config = config or AnnotationsConfig()
+        self._pattern: Pattern[str] = re.compile(self.config.annotation_pattern)
 
     def _extract_annotations(
         self, content: str
@@ -119,16 +100,18 @@ class AnnotationValidator(BaseValidator):
             content: The content to extract annotations from
 
         Returns:
-            List of tuples containing (type, content, start_pos, line_number)
+            List of tuples containing (type, content, start_line, end_line)
         """
-        annotations = []
-        for match in self._pattern.finditer(content):
-            ann_type = match.group(1)
-            ann_content = match.group(2)
-            start_pos = match.start()
-            # Calculate line number
-            line_number = content.count("\n", 0, start_pos) + 1
-            annotations.append((ann_type, ann_content, start_pos, line_number))
+        annotations: list[tuple[str, str, int, int | None]] = []
+        lines = content.split("\n")
+
+        for i, line in enumerate(lines, 1):
+            matches = self._pattern.finditer(line)
+            for match in matches:
+                ann_type = match.group(1)
+                ann_content = match.group(2).strip()
+                annotations.append((ann_type, ann_content, i, None))
+
         return annotations
 
     def _validate_json_content(
@@ -138,7 +121,7 @@ class AnnotationValidator(BaseValidator):
 
         Args:
             content: The JSON content to validate
-            line_number: Line number where the content starts
+            line_number: Line number where the content appears
 
         Returns:
             Tuple of (is_valid, parsed_content, error_message)
@@ -149,102 +132,77 @@ class AnnotationValidator(BaseValidator):
                 return False, None, "Annotation content must be a JSON object"
             return True, parsed, None
         except json.JSONDecodeError as e:
-            return False, None, f"Invalid JSON syntax: {str(e)}"
+            return False, None, f"Invalid JSON: {str(e)}"
 
     async def validate(
         self, context: ValidationContext
     ) -> AsyncGenerator[ValidationResult, None]:
-        """Validate annotations in an MDC file.
+        """Validate annotations in the given context.
 
         Args:
-            context: Validation context containing file and workspace information
+            context: The validation context containing the content to validate
 
         Yields:
-            ValidationResult for each validation check
-
-        Raises:
-            AnnotationError: If annotations cannot be parsed
+            ValidationResult objects for each validation issue found
         """
-        content = context.content
+        found_types: set[str] = set()
+        annotations = self._extract_annotations(context.content)
 
-        # Extract all annotations
-        annotations = self._extract_annotations(content)
-        found_types = set()
-
-        # Track annotation order for nesting validation
-        current_section: str | None = None
-        nesting_stack: list[str] = []
-
-        for ann_type, ann_content, start_pos, line_number in annotations:
-            found_types.add(ann_type)
-
-            # Validate annotation type
+        # Check each annotation
+        for ann_type, content, line_number, _ in annotations:
+            # Check if type is known/allowed
             if (
-                not self.config.allow_unknown_types
-                and ann_type not in self.config.known_types
+                ann_type not in self.config.known_types
+                and not self.config.allow_unknown_types
             ):
                 yield ValidationResult(
-                    is_valid=False,
+                    message=f"Unknown annotation type: {ann_type}",
+                    line_number=line_number,
                     severity=ValidationSeverity.ERROR,
-                    message=f"Unknown annotation type: @{ann_type}",
-                    location=ValidationLocation(
-                        line=line_number,
-                        column=1,
-                        section="annotations",
-                        context=f"@{ann_type}",
+                    context=context.with_location(
+                        ValidationLocation(
+                            line_number=line_number,
+                            validator_name=self.name,
+                        )
                     ),
                 )
                 continue
 
+            found_types.add(ann_type)
+
             # Validate JSON content
-            is_valid, parsed_content, error_message = self._validate_json_content(
-                ann_content, line_number
+            is_valid, parsed_content, error_msg = self._validate_json_content(
+                content, line_number
             )
             if not is_valid:
                 yield ValidationResult(
-                    is_valid=False,
+                    message=f"Invalid annotation content: {error_msg}",
+                    line_number=line_number,
                     severity=ValidationSeverity.ERROR,
-                    message=error_message or "Invalid JSON content",
-                    location=ValidationLocation(
-                        line=line_number,
-                        column=1,
-                        section="annotations",
-                        context=ann_content,
+                    context=context.with_location(
+                        ValidationLocation(
+                            line_number=line_number,
+                            validator_name=self.name,
+                        )
                     ),
                 )
                 continue
 
-            # Validate content structure based on type
+            # Validate against schema
             try:
-                annotation = AnnotationSchema(type=ann_type, content=parsed_content)
-
-                # Validate nesting (if needed)
-                if current_section:
-                    nesting_stack.append(current_section)
-                current_section = ann_type
-
-                yield ValidationResult(
-                    is_valid=True,
-                    severity=ValidationSeverity.INFO,
-                    message=f"Valid @{ann_type} annotation",
-                    location=ValidationLocation(
-                        line=line_number,
-                        column=1,
-                        section="annotations",
-                        context=f"@{ann_type}",
-                    ),
-                )
-
+                if ann_type in ANNOTATION_TYPE_MAP:
+                    model_class = ANNOTATION_TYPE_MAP[ann_type]
+                    model_class(type=ann_type, **parsed_content)
             except Exception as e:
                 yield ValidationResult(
-                    is_valid=False,
+                    message=f"Schema validation failed: {str(e)}",
+                    line_number=line_number,
                     severity=ValidationSeverity.ERROR,
-                    message=f"Invalid annotation structure: {str(e)}",
-                    location=ValidationLocation(
-                        line=line_number,
-                        column=1,
-                        section="annotations",
-                        context=ann_content,
+                    context=context.with_location(
+                        ValidationLocation(
+                            line_number=line_number,
+                            validator_name=self.name,
+                        )
                     ),
                 )
 
@@ -252,12 +210,13 @@ class AnnotationValidator(BaseValidator):
         missing = self.config.required_annotations - found_types
         if missing:
             yield ValidationResult(
-                is_valid=False,
+                message=f"Missing required annotations: {', '.join(missing)}",
+                line_number=1,
                 severity=ValidationSeverity.ERROR,
-                message=f"Missing required annotations: {', '.join(f'@{t}' for t in missing)}",
-                location=ValidationLocation(
-                    line=1,
-                    column=1,
-                    section="annotations",
+                context=context.with_location(
+                    ValidationLocation(
+                        line_number=1,
+                        validator_name=self.name,
+                    )
                 ),
             )

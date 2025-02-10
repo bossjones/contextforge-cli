@@ -327,3 +327,20 @@ markers = [
 [tool.uv.sources]
 pytest-freezegun = { git = "https://github.com/bossjones/pytest-freezegun" }
 # --- AI-CONTEXT-END ---
+
+[tool.pylint]
+load-plugins = ["pylint_pydantic"]
+extension-pkg-whitelist = ["pydantic"]
+disable = [
+    "C0111",  # missing-docstring
+    "C0103",  # invalid-name
+    "C0114",  # missing-module-docstring
+    "C0115",  # missing-class-docstring
+    "C0116",  # missing-function-docstring
+    "R0903",  # too-few-public-methods
+    "R0913",  # too-many-arguments
+    "W0511",  # fixme
+]
+good-names = ["i", "j", "k", "ex", "Run", "_", "pk", "id"]
+max-line-length = 120
+ignore = ["CVS", ".git", ".hg", ".mypy_cache", ".tox", ".venv", "venv", ".env", ".eggs", "*.egg"]

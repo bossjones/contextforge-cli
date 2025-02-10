@@ -32,18 +32,24 @@ APP = typer.Typer(
 console = Console()
 
 
-def path_callback(path: str) -> Path:
-    """Convert string path to Path object and validate existence.
+def path_callback(path: str | list[str] | None) -> Path | list[Path] | None:
+    """Convert string path(s) to Path object(s) and validate existence.
 
     Args:
-        path: String path to convert
+        path: String path or list of paths to convert
 
     Returns:
-        Path object representing the input path
+        Path object or list of Path objects representing the input path(s)
 
     Raises:
         typer.BadParameter: If path doesn't exist
     """
+    if path is None:
+        return None
+
+    if isinstance(path, list):
+        return [Path(p) if isinstance(p, str) else p for p in path]
+
     p = Path(path)
     if not p.exists():
         raise typer.BadParameter(f"Path does not exist: {path}")
@@ -58,6 +64,38 @@ PathArgument = Annotated[
         exists=True,
     ),
 ]
+
+
+def collect_files_to_validate(
+    paths: list[Path] | None,
+    include_patterns: set[str],
+    exclude_patterns: set[str],
+) -> list[Path]:
+    """Collect files to validate based on paths and patterns.
+
+    Args:
+        paths: List of paths to validate
+        include_patterns: Glob patterns for files to include
+        exclude_patterns: Glob patterns for files to exclude
+
+    Returns:
+        List of Path objects to validate
+    """
+    files_to_validate: list[Path] = []
+    default_paths = [Path(".")] if not paths else paths
+
+    for path in default_paths:
+        if path.is_file():
+            files_to_validate.append(path)
+        else:
+            for pattern in include_patterns:
+                files_to_validate.extend(
+                    f
+                    for f in path.glob(pattern)
+                    if not any(f.match(ep) for ep in exclude_patterns)
+                )
+
+    return files_to_validate
 
 
 @APP.command()
@@ -148,17 +186,11 @@ def validate(
         cli = ValidationCli(config=config)
 
         # Collect files to validate
-        files_to_validate: list[Path] = []
-        for path in paths or [Path(".")]:
-            if path.is_file():
-                files_to_validate.append(path)
-            else:
-                for pattern in config.include_patterns:
-                    files_to_validate.extend(
-                        f
-                        for f in path.glob(pattern)
-                        if not any(f.match(ep) for ep in config.exclude_patterns)
-                    )
+        files_to_validate = collect_files_to_validate(
+            paths,
+            config.include_patterns,
+            config.exclude_patterns,
+        )
 
         if not files_to_validate:
             console.print("No files found to validate!", style="yellow")

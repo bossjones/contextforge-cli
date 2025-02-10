@@ -63,7 +63,10 @@ class CrossRefValidator(BaseValidator):
         Args:
             config: Configuration for cross-reference validation. If None, default config is used.
         """
-        super().__init__()
+        super().__init__(
+            name="cross_refs",
+            description="Validates cross-references between MDC files, including file existence, anchor validity, and URL formatting",  # noqa: E501
+        )
         self.config = config or CrossRefConfig()
         self._anchor_cache: dict[str, set[str]] = {}
 

@@ -56,7 +56,10 @@ class XMLTagValidator(BaseValidator):
         Args:
             config: Configuration for XML tag validation. If None, default config is used.
         """
-        super().__init__()
+        super().__init__(
+            name="xml_tags",
+            description="Validates XML tags in MDC files, ensuring proper structure, nesting, and attribute usage",  # noqa: E501
+        )
         self.config = config or XMLTagConfig()
 
     async def validate(self, context: MDCContext) -> list[ValidationResult]:
