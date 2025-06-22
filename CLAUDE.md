@@ -1,6 +1,43 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Development Guidelines
 
 This document contains critical information about working with this codebase. Follow these guidelines precisely.
+
+# Architecture Overview
+
+ContextForge CLI is a Python-based tool for managing and enhancing AI context in projects. Key architectural components:
+
+## Core Architecture
+- **CLI Framework**: Typer with AsyncTyper extension for async command support
+- **AI Integration**: LangChain/LangGraph for advanced AI workflows
+- **Context Management**: Memory system with @memories.md, @lessons-learned.md, @scratchpad.md
+- **Dual-Mode System**: Plan mode (analysis) → Act mode (implementation) with confidence scoring
+- **Multi-Agent Architecture**: Coordinated planning and execution agents
+
+## Key Directories
+- `src/contextforge_cli/`: Main package with CLI, models, utils, subcommands
+- `src/contextforge_cli/subcommands/`: CLI subcommands (ai_docs_cmd, migrate_rules, etc.)
+- `src/contextforge_cli/utils/`: Utility modules (file operations, AI docs, shell helpers)
+- `src/contextforge_cli/models/`: Data models and validation
+- `src/contextforge_cli/vendored/`: Third-party code (cursorfocus integration)
+- `.cursor/rules/`: Cursor IDE rules and conventions
+
+## Common Commands
+
+### Development
+- Build: `uv run python -m build` or `make build`
+- Format: `uv run ruff format .`
+- Lint: `uv run ruff check . --fix`
+- Type check: `uv run pyright`
+- Test: `uv run pytest` or `make test`
+- Install: `uv sync` or `make install`
+
+### Project Scripts
+- `cfctl` or `contextforgectl`: Main CLI entry points
+- Script commands available in pyproject.toml [project.scripts]
 
 ## Core Development Rules
 
@@ -112,3 +149,41 @@ This document contains critical information about working with this codebase. Fo
    - Follow existing patterns
    - Document public APIs
    - Test thoroughly
+
+# Context Management System
+
+This project uses a sophisticated context management system with specific files:
+
+## Memory Files
+- `@memories.md`: Chronological log of all interactions and decisions
+- `@lessons-learned.md`: Knowledge base for preventing mistakes and capturing solutions
+- `@scratchpad.md`: Phase-specific task tracker and implementation planner
+
+## Cursor Rules Integration
+- `.cursor/rules/`: Contains project-specific Cursor IDE rules
+- Key rules include memory management, conventional commits, and documentation standards
+- Always reference brain-memories-lessons-learned-scratchpad.mdc.md for context patterns
+
+## Mode System
+1. **Plan Mode**: Analysis phase with confidence scoring (requires 95% confidence to proceed)
+2. **Act Mode**: Implementation phase triggered after sufficient confidence
+3. **Multi-Agent Coordination**: Through scratchpad system for task management
+
+# Important Patterns
+
+## AsyncTyper Usage
+- Project uses custom AsyncTyper extension for async CLI commands
+- Located in `src/contextforge_cli/asynctyper.py`
+- Supports both sync and async command patterns
+
+## Dependency Management
+- Heavy use of LangChain ecosystem (langchain, langgraph, langsmith)
+- AI/ML tools: sentence-transformers, mlx-whisper, pytorch vision
+- Testing: extensive pytest setup with multiple markers and async support
+- Development: ruff for linting/formatting, pyright for type checking
+
+## Testing Structure
+- Comprehensive test markers system (see pyproject.toml)
+- Async testing with anyio (not asyncio)
+- Coverage reporting with multiple formats
+- Integration and unit test separation
